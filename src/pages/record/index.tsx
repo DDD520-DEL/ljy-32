@@ -7,6 +7,7 @@ import { useData } from '../../store/DataContext';
 import FloorCard from '../../components/FloorCard';
 import type { SensitivityLevel } from '../../types';
 import { SENSITIVITY_CONFIG } from '../../types';
+import { savePhotoPermanently, deletePhotoFile } from '../../utils/storage';
 
 const RecordPage: React.FC = () => {
   const {
@@ -68,8 +69,13 @@ const RecordPage: React.FC = () => {
       count: 9 - formData.photos.length,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
-        const newPhotos = [...formData.photos, ...res.tempFilePaths];
+      success: async (res) => {
+        Taro.showLoading({ title: '保存照片中...' });
+        const savedPaths = await Promise.all(
+          res.tempFilePaths.map(path => savePhotoPermanently(path))
+        );
+        Taro.hideLoading();
+        const newPhotos = [...formData.photos, ...savedPaths];
         setFormData({ ...formData, photos: newPhotos.slice(0, 9) });
       },
       fail: (err) => {
@@ -86,6 +92,8 @@ const RecordPage: React.FC = () => {
   }, [formData.photos]);
 
   const handleDeleteImage = useCallback((index: number) => {
+    const photoToDelete = formData.photos[index];
+    deletePhotoFile(photoToDelete);
     const newPhotos = formData.photos.filter((_, i) => i !== index);
     setFormData({ ...formData, photos: newPhotos });
   }, [formData.photos]);

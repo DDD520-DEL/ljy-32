@@ -106,10 +106,15 @@ const SharePage: React.FC = () => {
       }
       text += `   - 测试次数：${floorItem.testCount}次\n`;
       if (floorPhotos.length > 0) {
-        text += `   - 现场照片：${floorPhotos.length}张（详见附件）\n`;
+        text += `   - 现场照片：${floorPhotos.length}张\n`;
       }
       text += `\n`;
     });
+
+    const totalPhotos = poorFloors.reduce((sum, item) => sum + getFloorPhotos(item.floor).length, 0);
+    if (totalPhotos > 0) {
+      text += `※ 共${totalPhotos}张现场照片将随本投诉一并发送，请关注图片消息。\n\n`;
+    }
 
     text += `以上问题严重影响业主夜间出行安全，尤其是老人和小孩的安全。根据《物业管理条例》，声控灯属于公共设施，物业有责任进行维护和更换。\n\n`;
     text += `恳请物业尽快安排人员进行检查和维修，对于严重老化的声控灯建议直接更换为新型节能声控灯。\n\n`;
@@ -130,11 +135,71 @@ const SharePage: React.FC = () => {
       await Taro.setClipboardData({
         data: generateComplaintText
       });
-      Taro.showToast({ title: '已复制到剪贴板', icon: 'success' });
-      console.log('[SharePage] 文案已复制');
     } catch (e) {
       console.error('[SharePage] 复制失败:', e);
       Taro.showToast({ title: '复制失败，请重试', icon: 'none' });
+      return;
+    }
+
+    const allPhotos: string[] = [];
+    poorFloors.forEach(item => {
+      allPhotos.push(...getFloorPhotos(item.floor));
+    });
+
+    if (allPhotos.length > 0) {
+      Taro.showModal({
+        title: '文案已复制',
+        content: `投诉文案已复制到剪贴板。还有${allPhotos.length}张现场照片，保存到相册后可在微信群里一并发送，让物业直观看到问题。是否现在保存照片？`,
+        confirmText: '保存照片',
+        cancelText: '暂不需要',
+        success: async (res) => {
+          if (res.confirm) {
+            await handleSavePhotosToAlbum(allPhotos);
+          }
+        }
+      });
+    } else {
+      Taro.showToast({ title: '已复制到剪贴板', icon: 'success' });
+    }
+    console.log('[SharePage] 文案已复制');
+  };
+
+  const handleSavePhotosToAlbum = async (photos: string[]) => {
+    if (photos.length === 0) {
+      Taro.showToast({ title: '暂无照片可保存', icon: 'none' });
+      return;
+    }
+
+    Taro.showLoading({ title: '保存照片中...' });
+    let savedCount = 0;
+
+    for (const photo of photos) {
+      try {
+        await Taro.saveImageToPhotosAlbum({ filePath: photo });
+        savedCount++;
+      } catch (e: any) {
+        if (e?.errMsg?.includes('auth') || e?.errMsg?.includes('deny')) {
+          Taro.hideLoading();
+          Taro.showModal({
+            title: '需要相册权限',
+            content: '请在设置中允许访问相册，以便保存现场照片',
+            success: (res) => {
+              if (res.confirm) {
+                Taro.openSetting();
+              }
+            }
+          });
+          return;
+        }
+        console.error('[SharePage] saveImageToPhotosAlbum error:', e);
+      }
+    }
+
+    Taro.hideLoading();
+    if (savedCount > 0) {
+      Taro.showToast({ title: `已保存${savedCount}张照片到相册`, icon: 'success' });
+    } else {
+      Taro.showToast({ title: '保存失败，请检查相册权限', icon: 'none' });
     }
   };
 
@@ -312,6 +377,20 @@ const SharePage: React.FC = () => {
             <Button className={styles.actionBtn + ' ' + styles.primary} onClick={handleCopy}>
               复制文案发物业群
             </Button>
+            {poorFloors.reduce((sum, item) => sum + getFloorPhotos(item.floor).length, 0) > 0 && (
+              <Button
+                className={styles.actionBtn + ' ' + styles.photoBtn}
+                onClick={() => {
+                  const allPhotos: string[] = [];
+                  poorFloors.forEach(item => {
+                    allPhotos.push(...getFloorPhotos(item.floor));
+                  });
+                  handleSavePhotosToAlbum(allPhotos);
+                }}
+              >
+                📷 保存现场照片到相册
+              </Button>
+            )}
             <Button className={styles.actionBtn + ' ' + styles.repairBtn} onClick={handleViewRepairBoard}>
               🔧 查看维修看板
             </Button>
@@ -323,10 +402,11 @@ const SharePage: React.FC = () => {
           <View className={styles.tips}>
             <Text className={styles.tipsTitle}>💡 使用提示</Text>
             <Text className={styles.tipsText}>
-              1. 点击"一键复制"按钮复制文案{'\n'}
-              2. 打开微信物业群，粘贴发送{'\n'}
-              3. 可以邀请邻居一起测试，数据更有说服力{'\n'}
-              4. 持续记录，跟踪物业处理进度
+              1. 点击"复制文案发物业群"复制投诉文案{'\n'}
+              2. 弹窗提示时点击"保存照片"，将现场照片保存到手机相册{'\n'}
+              3. 打开微信物业群，粘贴文案后再逐张发送照片{'\n'}
+              4. 照片证据+测试数据一起发，更有说服力{'\n'}
+              5. 持续记录，跟踪物业处理进度
             </Text>
           </View>
         </>

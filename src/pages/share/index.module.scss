@@ -302,6 +302,11 @@
     background: linear-gradient(135deg, $color-info 0%, #3B82F6 100%);
     color: $color-text-white;
   }
+
+  &.photoBtn {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: $color-text-white;
+  }
 }
 
 .emptyState {

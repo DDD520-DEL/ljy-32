@@ -96,7 +96,14 @@ export const storage = {
   deleteBuilding(id: string): Building[] {
     const buildings = this.getBuildings().filter(b => b.id !== id);
     this.saveBuildings(buildings);
-    const records = this.getRecords().filter(r => r.buildingId !== id);
+    const allRecords = this.getRecords();
+    const buildingRecords = allRecords.filter(r => r.buildingId === id);
+    buildingRecords.forEach(r => {
+      if (r.photos && r.photos.length > 0) {
+        r.photos.forEach(p => deletePhotoFile(p));
+      }
+    });
+    const records = allRecords.filter(r => r.buildingId !== id);
     this.saveRecords(records);
     return buildings;
   },
@@ -109,7 +116,12 @@ export const storage = {
   },
 
   deleteRecord(id: string): TestRecord[] {
-    const records = this.getRecords().filter(r => r.id !== id);
+    const allRecords = this.getRecords();
+    const target = allRecords.find(r => r.id === id);
+    if (target?.photos && target.photos.length > 0) {
+      target.photos.forEach(p => deletePhotoFile(p));
+    }
+    const records = allRecords.filter(r => r.id !== id);
     this.saveRecords(records);
     return records;
   },
@@ -212,6 +224,67 @@ export const storage = {
     }
     this.saveRepairRecords(records);
     return records;
+  }
+};
+
+const PHOTOS_DIR = '/light_evaluator_photos';
+
+export const ensurePhotosDir = (): string | null => {
+  try {
+    const userDataPath = Taro.env.USER_DATA_PATH;
+    if (!userDataPath) return null;
+    const dirPath = `${userDataPath}${PHOTOS_DIR}`;
+    const fs = Taro.getFileSystemManager();
+    try {
+      fs.accessSync(dirPath);
+    } catch {
+      fs.mkdirSync(dirPath, true);
+    }
+    return dirPath;
+  } catch (e) {
+    console.error('[Storage] ensurePhotosDir error:', e);
+    return null;
+  }
+};
+
+export const savePhotoPermanently = (tempFilePath: string): Promise<string> => {
+  return new Promise((resolve) => {
+    try {
+      const dirPath = ensurePhotosDir();
+      if (!dirPath) {
+        resolve(tempFilePath);
+        return;
+      }
+      const ext = tempFilePath.split('.').pop() || 'jpg';
+      const fileName = `p_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${ext}`;
+      const permanentPath = `${dirPath}/${fileName}`;
+      const fs = Taro.getFileSystemManager();
+      fs.saveFile({
+        tempFilePath,
+        filePath: permanentPath,
+        success: () => {
+          resolve(permanentPath);
+        },
+        fail: (err) => {
+          console.error('[Storage] saveFile fail:', err);
+          resolve(tempFilePath);
+        }
+      });
+    } catch (e) {
+      console.error('[Storage] savePhotoPermanently error:', e);
+      resolve(tempFilePath);
+    }
+  });
+};
+
+export const deletePhotoFile = (filePath: string): void => {
+  try {
+    const userDataPath = Taro.env.USER_DATA_PATH;
+    if (!userDataPath || !filePath.startsWith(userDataPath)) return;
+    const fs = Taro.getFileSystemManager();
+    fs.unlinkSync(filePath);
+  } catch (e) {
+    console.error('[Storage] deletePhotoFile error:', e);
   }
 };
 
