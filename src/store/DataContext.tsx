@@ -208,6 +208,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       building.id,
       building.name,
       building.address,
+      building.totalFloors,
       user.name
     );
 
@@ -226,12 +227,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     let building = buildings.find(b => b.id === invData.buildingId);
     if (!building) {
-      addBuilding({
-        name: invData.buildingName,
-        address: invData.address,
-        totalFloors: 18
-      });
-      building = storage.getBuildings().find(b => b.name === invData.buildingName && b.address === invData.address);
+      const updated = storage.addBuildingWithId(
+        invData.buildingId,
+        invData.buildingName,
+        invData.address,
+        invData.totalFloors
+      );
+      setBuildings(updated);
+      building = updated.find(b => b.id === invData.buildingId);
     }
 
     if (building) {

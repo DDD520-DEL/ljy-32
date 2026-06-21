@@ -45,16 +45,27 @@ const CollaboratePage: React.FC = () => {
     }
   }, [currentBuildingId, generateInvitation]);
 
+  const handleCopyCodeOnly = useCallback(async () => {
+    if (!invitationResult) return;
+    try {
+      await Taro.setClipboardData({ data: invitationResult.code });
+      Taro.showToast({ title: '口令已复制', icon: 'success' });
+    } catch {
+      Taro.showToast({ title: '复制失败', icon: 'none' });
+    }
+  }, [invitationResult]);
+
   const handleCopyCode = useCallback(async () => {
     if (!invitationResult || !currentBuilding) return;
 
     const text = `【楼道声控灯测试邀请】\n` +
       `${currentBuilding.name}的邻居你好！我正在测试${currentBuilding.address}的楼道声控灯质量。\n` +
       `邀请你一起参与测试，数据更有说服力！\n\n` +
-      `口令：${invitationResult.code}\n` +
+      `邀请口令：\n${invitationResult.code}\n\n` +
       `楼栋：${currentBuilding.name}\n` +
-      `地址：${currentBuilding.address}\n\n` +
-      `打开"楼道声控灯评测"小程序，在"邻里协作"页面输入口令即可加入。`;
+      `地址：${currentBuilding.address}\n` +
+      `共${currentBuilding.totalFloors}层\n\n` +
+      `打开"楼道声控灯评测"小程序，在"邻里协作"页面粘贴口令即可加入。`;
 
     try {
       await Taro.setClipboardData({ data: text });
@@ -150,7 +161,7 @@ const CollaboratePage: React.FC = () => {
         <Text className={styles.sectionTitle}>📢 生成邀请口令</Text>
         <View className={styles.inviteCard}>
           <Text className={styles.inviteDesc}>
-            生成一个6位口令分享给邻居，邻居输入口令后可加入同一楼栋的测试
+            生成邀请口令分享给邻居，邻居粘贴口令后可加入同一楼栋的测试。口令包含楼栋信息，无需对方已有该楼栋。
           </Text>
 
           {invitationResult ? (
@@ -160,14 +171,17 @@ const CollaboratePage: React.FC = () => {
               </View>
               <View className={styles.codeMeta}>
                 <Text className={styles.codeMetaText}>
-                  楼栋：{invitationResult.buildingName} | 有效期7天
+                  楼栋：{invitationResult.buildingName} | {invitationResult.totalFloors}层 | 有效期7天
                 </Text>
                 <Text className={styles.codeMetaText}>
                   生成时间：{formatDate(invitationResult.createTime)}
                 </Text>
               </View>
               <View className={styles.codeActions}>
-                <Button className={styles.copyBtn} onClick={handleCopyCode}>
+                <Button className={styles.copyBtn} onClick={handleCopyCodeOnly}>
+                  复制口令
+                </Button>
+                <Button className={styles.regenerateBtn} onClick={handleCopyCode}>
                   复制口令和邀请文案
                 </Button>
                 <Button className={styles.regenerateBtn} onClick={handleGenerateCode}>
@@ -191,15 +205,14 @@ const CollaboratePage: React.FC = () => {
         <Text className={styles.sectionTitle}>🔗 输入口令加入</Text>
         <View className={styles.joinCard}>
           <Text className={styles.joinDesc}>
-            收到邻居的邀请口令？输入后可加入该楼栋，一起测试！
+            收到邻居的邀请口令？粘贴后即可加入该楼栋，即使你还没有该楼栋也能自动创建。加入后大家测试同一楼层的记录会合并计算平均分。
           </Text>
           <View className={styles.inputRow}>
             <Input
               className={styles.codeInput}
               value={inputCode}
-              onInput={e => setInputCode(e.detail.value.toUpperCase())}
-              placeholder="请输入6位邀请口令"
-              maxLength={6}
+              onInput={e => setInputCode(e.detail.value)}
+              placeholder="粘贴邀请口令"
             />
             <Button className={styles.joinBtn} onClick={handleJoinByCode}>
               加入
@@ -270,10 +283,11 @@ const CollaboratePage: React.FC = () => {
         <Text className={styles.tipsTitle}>💡 使用说明</Text>
         <Text className={styles.tipsText}>
           1. 生成邀请口令后，复制分享给邻居{'\n'}
-          2. 邻居输入口令即可加入同一楼栋{'\n'}
-          3. 两人以上测试同一楼层后，排行榜取平均值{'\n'}
-          4. 详情页可查看每位邻居的测试记录和贡献{'\n'}
-          5. 口令有效期7天，过期可重新生成
+          2. 邻居粘贴口令即可加入同一楼栋{'\n'}
+          3. 口令自带楼栋信息，邻居无需先有该楼栋{'\n'}
+          4. 两人以上测试同一楼层后，排行榜取平均值{'\n'}
+          5. 详情页可查看每位邻居的测试记录和贡献{'\n'}
+          6. 口令有效期7天，过期可重新生成
         </Text>
       </View>
     </ScrollView>

@@ -55,6 +55,7 @@ export interface InvitationCode {
   buildingId: string;
   buildingName: string;
   address: string;
+  totalFloors: number;
   inviterName: string;
   createTime: string;
   expireTime: string;

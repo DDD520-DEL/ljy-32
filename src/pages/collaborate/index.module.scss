@@ -191,16 +191,19 @@
   background: linear-gradient(135deg, rgba($color-info, 0.1) 0%, rgba($color-info, 0.05) 100%);
   border: 2rpx dashed $color-info;
   border-radius: $radius-lg;
-  padding: $spacing-xl $spacing-xxl;
+  padding: $spacing-lg $spacing-md;
   text-align: center;
   width: 100%;
+  word-break: break-all;
 }
 
 .codeText {
-  font-size: 72rpx;
-  font-weight: $font-weight-bold;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
   color: $color-info;
-  letter-spacing: 16rpx;
+  letter-spacing: 2rpx;
+  line-height: 1.6;
+  word-break: break-all;
 }
 
 .codeMeta {
@@ -231,6 +234,22 @@
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-text-white;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.copyFullBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: $color-bg-card;
+  border: 2rpx solid $color-info;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-info;
 
   &:active {
     opacity: 0.9;
@@ -270,15 +289,13 @@
 
 .codeInput {
   flex: 1;
-  height: 80rpx;
+  min-height: 80rpx;
   border: 2rpx solid $color-border;
   border-radius: $radius-md;
-  padding: 0 $spacing-md;
-  font-size: $font-size-xl;
-  font-weight: $font-weight-bold;
-  letter-spacing: 8rpx;
-  text-align: center;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
   color: $color-text-primary;
+  word-break: break-all;
 
   &:focus {
     border-color: $color-info;

@@ -66,6 +66,22 @@ export const storage = {
     return buildings;
   },
 
+  addBuildingWithId(id: string, name: string, address: string, totalFloors: number): Building[] {
+    const buildings = this.getBuildings();
+    const exists = buildings.find(b => b.id === id);
+    if (exists) return buildings;
+    const newBuilding: Building = {
+      id,
+      name,
+      address,
+      totalFloors,
+      createTime: new Date().toISOString()
+    };
+    buildings.push(newBuilding);
+    this.saveBuildings(buildings);
+    return buildings;
+  },
+
   updateBuilding(building: Building): Building[] {
     const buildings = this.getBuildings();
     const index = buildings.findIndex(b => b.id === building.id);
