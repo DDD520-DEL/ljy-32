@@ -309,6 +309,14 @@ const HomePage: React.FC = () => {
           <Button className={styles.actionBtn} onClick={handleStartTest}>
             开始测试记录
           </Button>
+          <View className={styles.actionRow}>
+            <Button className={styles.actionBtn + ' ' + styles.rowBtn + ' ' + styles.reportBtn} onClick={() => Taro.navigateTo({ url: '/pages/report/index?type=weekly' })}>
+              📊 生成周报
+            </Button>
+            <Button className={styles.actionBtn + ' ' + styles.rowBtn + ' ' + styles.reportBtn2} onClick={() => Taro.navigateTo({ url: '/pages/report/index?type=monthly' })}>
+              📈 生成月报
+            </Button>
+          </View>
           <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleManageBuilding}>
             管理楼栋信息
           </Button>

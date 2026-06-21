@@ -104,6 +104,15 @@
   gap: $spacing-md;
 }
 
+.actionRow {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.rowBtn {
+  flex: 1;
+}
+
 .actionBtn {
   @include button-reset;
   width: 100%;
@@ -129,6 +138,20 @@
   &.collabBtn {
     background: $color-info;
     color: $color-text-white;
+  }
+
+  &.reportBtn {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+    color: $color-text-white;
+    height: $button-height-md;
+    font-size: $font-size-md;
+  }
+
+  &.reportBtn2 {
+    background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
+    color: $color-text-white;
+    height: $button-height-md;
+    font-size: $font-size-md;
   }
 }
 

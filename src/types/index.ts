@@ -129,3 +129,58 @@ export const REPAIR_STATUS_CONFIG: Record<RepairStatus, { label: string; color: 
   repairing: { label: '维修中', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.1)', icon: '🔧', step: 3 },
   fixed: { label: '已修复', color: '#10B981', bgColor: 'rgba(16, 185, 129, 0.1)', icon: '✅', step: 4 }
 };
+
+export type ReportType = 'weekly' | 'monthly';
+
+export interface SensitivityTrendItem {
+  date: string;
+  label: string;
+  avgScore: number;
+  count: number;
+}
+
+export interface FloorIssueChange {
+  floor: number;
+  prevGrade: 'excellent' | 'good' | 'poor' | 'none';
+  currGrade: 'excellent' | 'good' | 'poor';
+  change: 'improved' | 'declined' | 'unchanged' | 'new';
+  scoreChange: number;
+}
+
+export interface ReportData {
+  type: ReportType;
+  buildingId: string;
+  buildingName: string;
+  address: string;
+  totalFloors: number;
+  periodStart: string;
+  periodEnd: string;
+  periodLabel: string;
+  generateTime: string;
+  newTestCount: number;
+  prevPeriodTestCount: number;
+  testCountChange: number;
+  testedFloors: number;
+  testedFloorsPrev: number;
+  avgScore: number;
+  avgScorePrev: number;
+  avgScoreChange: number;
+  sensitivityLevelDist: Record<SensitivityLevel, number>;
+  sensitivityLevelDistPrev: Record<SensitivityLevel, number>;
+  sensitivityTrend: SensitivityTrendItem[];
+  excellentCount: number;
+  goodCount: number;
+  poorCount: number;
+  excellentCountPrev: number;
+  goodCountPrev: number;
+  poorCountPrev: number;
+  improvedFloors: FloorIssueChange[];
+  declinedFloors: FloorIssueChange[];
+  unchangedFloors: FloorIssueChange[];
+  newFloors: FloorIssueChange[];
+  topFloors: Array<{ floor: number; avgScore: number; testCount: number; grade: 'excellent' | 'good' | 'poor' }>;
+  bottomFloors: Array<{ floor: number; avgScore: number; testCount: number; grade: 'excellent' | 'good' | 'poor' }>;
+  blindSpotCount: number;
+  blindSpotFloors: number[];
+  contributors: Array<{ testerName: string; testCount: number }>;
+}

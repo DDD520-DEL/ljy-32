@@ -1,0 +1,614 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding 180rpx;
+  background: $color-bg-page;
+}
+
+.tabBar {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  padding: 6rpx;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-card;
+}
+
+.tabItem {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    font-weight: $font-weight-semibold;
+    box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+  }
+}
+
+.emptyState {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xxl $spacing-lg;
+  text-align: center;
+  box-shadow: $shadow-card;
+
+  .emptyIcon {
+    font-size: 120rpx;
+    margin-bottom: $spacing-lg;
+  }
+
+  .emptyTitle {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .emptyDesc {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    line-height: $line-height-loose;
+  }
+}
+
+.reportCard {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+
+.reportHeader {
+  margin-bottom: $spacing-xl;
+  padding-bottom: $spacing-lg;
+  border-bottom: 2rpx dashed $color-border;
+
+  .buildingName {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-xs;
+  }
+
+  .buildingInfo {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-md;
+  }
+
+  .periodLabel {
+    display: inline-block;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    padding: $spacing-xs $spacing-lg;
+    border-radius: $radius-round;
+  }
+
+  .generateTime {
+    margin-top: $spacing-sm;
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  .icon {
+    font-size: $font-size-lg;
+  }
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.statBox {
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  position: relative;
+  overflow: hidden;
+
+  .statLabel {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-xs;
+  }
+
+  .statValue {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    line-height: 1.2;
+
+    &.primary { color: $color-primary; }
+    &.success { color: $color-success; }
+    &.warning { color: $color-warning; }
+    &.error { color: $color-error; }
+  }
+
+  .statChange {
+    display: inline-flex;
+    align-items: center;
+    gap: 4rpx;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    margin-top: $spacing-xs;
+    padding: 4rpx 12rpx;
+    border-radius: $radius-round;
+
+    &.up {
+      background: rgba($color-success, 0.1);
+      color: $color-success;
+    }
+
+    &.down {
+      background: rgba($color-error, 0.1);
+      color: $color-error;
+    }
+
+    &.flat {
+      background: rgba($color-text-secondary, 0.1);
+      color: $color-text-secondary;
+    }
+  }
+}
+
+.trendChart {
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 240rpx;
+  padding: $spacing-md 0;
+  gap: $spacing-xs;
+}
+
+.chartBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  height: 100%;
+
+  .barFill {
+    width: 100%;
+    max-width: 40rpx;
+    border-radius: $radius-sm $radius-sm 4rpx 4rpx;
+    background: linear-gradient(180deg, $color-primary 0%, $color-primary-light 100%);
+    transition: all $transition-base;
+    min-height: 6rpx;
+    position: relative;
+
+    &::after {
+      content: attr(data-score);
+      position: absolute;
+      top: -36rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: $color-primary;
+      white-space: nowrap;
+    }
+  }
+
+  .barLabel {
+    margin-top: $spacing-sm;
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    white-space: nowrap;
+  }
+}
+
+.sensitivityDist {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.levelBar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+
+  .levelName {
+    width: 80rpx;
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  .levelTrack {
+    flex: 1;
+    height: 24rpx;
+    background: $color-bg-page;
+    border-radius: $radius-round;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .levelFill {
+    height: 100%;
+    border-radius: $radius-round;
+    transition: width $transition-slow;
+  }
+
+  .levelCount {
+    width: 80rpx;
+    text-align: right;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+}
+
+.gradeBars {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.gradeBar {
+  flex: 1;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  text-align: center;
+
+  .gradeIcon {
+    font-size: 48rpx;
+    margin-bottom: $spacing-xs;
+  }
+
+  .gradeCount {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+
+    &.excellent { color: $color-success; }
+    &.good { color: $color-warning; }
+    &.poor { color: $color-error; }
+  }
+
+  .gradeLabel {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    margin-top: 4rpx;
+  }
+}
+
+.floorChanges {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.changeRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border-left: 6rpx solid transparent;
+
+  &.improved { border-left-color: $color-success; }
+  &.declined { border-left-color: $color-error; }
+  &.new { border-left-color: $color-primary; }
+
+  .floorNum {
+    width: 100rpx;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+
+  .floorInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4rpx;
+  }
+
+  .gradeChange {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+
+  .scoreChange {
+    display: inline-flex;
+    align-items: center;
+    gap: 4rpx;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    padding: 4rpx 12rpx;
+    border-radius: $radius-round;
+    align-self: flex-start;
+
+    &.up {
+      background: rgba($color-success, 0.1);
+      color: $color-success;
+    }
+
+    &.down {
+      background: rgba($color-error, 0.1);
+      color: $color-error;
+    }
+
+    &.new {
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+  }
+}
+
+.emptyChanges {
+  text-align: center;
+  padding: $spacing-xl 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.rankSection {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.rankList {
+  flex: 1;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+
+  .rankTitle {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-md;
+    text-align: center;
+
+    &.top { color: $color-success; }
+    &.bottom { color: $color-error; }
+  }
+}
+
+.rankItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .rankBadge {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    margin-right: $spacing-sm;
+    color: $color-text-white;
+    flex-shrink: 0;
+  }
+
+  .rankFloor {
+    flex: 1;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+
+  .rankScore {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.emptyRank {
+  text-align: center;
+  padding: $spacing-lg 0;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.blindSpotInfo {
+  background: rgba($color-warning, 0.08);
+  border: 2rpx solid rgba($color-warning, 0.2);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  margin-bottom: $spacing-lg;
+
+  .blindSpotTitle {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-warning;
+    margin-bottom: $spacing-sm;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+
+  .blindSpotText {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    line-height: $line-height-loose;
+  }
+}
+
+.contributors {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.contributorRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+
+  .contributorAvatar {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    margin-right: $spacing-md;
+    flex-shrink: 0;
+  }
+
+  .contributorName {
+    flex: 1;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+
+  .contributorCount {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+  }
+}
+
+.emptyContributors {
+  text-align: center;
+  padding: $spacing-lg 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.footerActions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding calc($spacing-md + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+  display: flex;
+  gap: $spacing-md;
+}
+
+.actionBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.primary {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    box-shadow: 0 6rpx 20rpx rgba($color-primary, 0.35);
+  }
+
+  &.secondary {
+    background: $color-bg-page;
+    color: $color-primary;
+    border: 2rpx solid $color-primary;
+  }
+}
+
+.previewCanvas {
+  position: fixed;
+  left: -9999rpx;
+  top: -9999rpx;
+  width: 750rpx;
+  height: 2000rpx;
+}
+
+.savingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+
+  .savingBox {
+    background: $color-bg-card;
+    border-radius: $radius-xl;
+    padding: $spacing-xxl;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-md;
+    min-width: 400rpx;
+  }
+
+  .loading {
+    width: 80rpx;
+    height: 80rpx;
+    border: 6rpx solid rgba($color-primary, 0.2);
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .savingText {
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

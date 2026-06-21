@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle } from '../types';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
+import { generateReport } from '../utils/reportUtils';
 
 interface DataContextType {
   buildings: Building[];
@@ -33,6 +34,7 @@ interface DataContextType {
   updateBuildingRetestCycle: (buildingId: string, cycle: RetestCycle, customDays?: number) => void;
   getRetestReminders: () => RetestReminder[];
   getFloorLastTestTime: (buildingId: string, floor: number) => string | null;
+  getReportData: (type: ReportType) => ReportData | null;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -343,6 +345,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return latestRecord.testTime;
   };
 
+  const getReportData = (type: ReportType): ReportData | null => {
+    const building = getCurrentBuilding();
+    if (!building) return null;
+    const buildingRecords = getRecordsByCurrentBuilding();
+    return generateReport(type, building, buildingRecords);
+  };
+
   const getRetestReminders = (): RetestReminder[] => {
     const reminders: RetestReminder[] = [];
     
@@ -414,7 +423,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateRepairStatus,
         updateBuildingRetestCycle,
         getRetestReminders,
-        getFloorLastTestTime
+        getFloorLastTestTime,
+        getReportData
       }}
     >
       {children}
