@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, Button, ScrollView, Input, Switch } from '@tarojs/components';
+import { View, Text, Button, ScrollView, Input, Switch, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
@@ -29,7 +29,8 @@ const RecordPage: React.FC = () => {
     sensitivityLevel: 'normal' as SensitivityLevel,
     duration: '',
     hasBlindSpot: false,
-    blindSpotDescription: ''
+    blindSpotDescription: '',
+    photos: [] as string[]
   });
 
   useDidShow(() => {
@@ -56,10 +57,38 @@ const RecordPage: React.FC = () => {
       sensitivityLevel: 'normal',
       duration: '',
       hasBlindSpot: false,
-      blindSpotDescription: ''
+      blindSpotDescription: '',
+      photos: []
     });
     setShowModal(true);
   };
+
+  const handleChooseImage = useCallback(() => {
+    Taro.chooseImage({
+      count: 9 - formData.photos.length,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const newPhotos = [...formData.photos, ...res.tempFilePaths];
+        setFormData({ ...formData, photos: newPhotos.slice(0, 9) });
+      },
+      fail: (err) => {
+        console.error('[RecordPage] chooseImage error:', err);
+      }
+    });
+  }, [formData.photos]);
+
+  const handlePreviewImage = useCallback((index: number) => {
+    Taro.previewImage({
+      current: formData.photos[index],
+      urls: formData.photos
+    });
+  }, [formData.photos]);
+
+  const handleDeleteImage = useCallback((index: number) => {
+    const newPhotos = formData.photos.filter((_, i) => i !== index);
+    setFormData({ ...formData, photos: newPhotos });
+  }, [formData.photos]);
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -99,7 +128,8 @@ const RecordPage: React.FC = () => {
       sensitivityScore: sensitivityConfig.score,
       duration,
       hasBlindSpot: formData.hasBlindSpot,
-      blindSpotDescription: formData.hasBlindSpot ? formData.blindSpotDescription.trim() : undefined
+      blindSpotDescription: formData.hasBlindSpot ? formData.blindSpotDescription.trim() : undefined,
+      photos: formData.photos.length > 0 ? formData.photos : undefined
     });
 
     Taro.showToast({ title: '记录成功', icon: 'success' });
@@ -242,6 +272,39 @@ const RecordPage: React.FC = () => {
                   onInput={e => setFormData({ ...formData, blindSpotDescription: e.detail.value })}
                 />
               )}
+            </View>
+
+            <View className={styles.formGroup}>
+              <Text className={styles.formLabel}>
+                现场拍照 <Text className={styles.photoHint}>（可拍声控灯、楼道环境、损坏情况，最多9张）</Text>
+              </Text>
+              <View className={styles.photoGrid}>
+                {formData.photos.map((photo, index) => (
+                  <View key={index} className={styles.photoItem}>
+                    <Image
+                      className={styles.photoImg}
+                      src={photo}
+                      mode="aspectFill"
+                      onClick={() => handlePreviewImage(index)}
+                    />
+                    <View
+                      className={styles.photoDelete}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteImage(index);
+                      }}
+                    >
+                      <Text className={styles.photoDeleteText}>×</Text>
+                    </View>
+                  </View>
+                ))}
+                {formData.photos.length < 9 && (
+                  <View className={styles.photoAdd} onClick={handleChooseImage}>
+                    <Text className={styles.photoAddIcon}>+</Text>
+                    <Text className={styles.photoAddText}>拍照/相册</Text>
+                  </View>
+                )}
+              </View>
             </View>
 
             <View className={styles.modalFooter}>

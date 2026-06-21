@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, Button, ScrollView } from '@tarojs/components';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, Button, ScrollView, Image } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
@@ -113,6 +113,13 @@ const DetailPage: React.FC = () => {
       return { label: '太长', status: 'poor' };
     }
   };
+
+  const handlePreviewImage = useCallback((photos: string[], index: number) => {
+    Taro.previewImage({
+      current: photos[index],
+      urls: photos
+    });
+  }, []);
 
   const handleAddTest = () => {
     Taro.showModal({
@@ -303,6 +310,24 @@ const DetailPage: React.FC = () => {
                                 盲区：{record.blindSpotDescription}
                               </Text>
                             )}
+                            {record.photos && record.photos.length > 0 && (
+                              <View className={styles.testerRecordPhotos}>
+                                {record.photos.slice(0, 3).map((photo, idx) => (
+                                  <Image
+                                    key={idx}
+                                    className={styles.testerRecordPhoto}
+                                    src={photo}
+                                    mode="aspectFill"
+                                    onClick={() => handlePreviewImage(record.photos!, idx)}
+                                  />
+                                ))}
+                                {record.photos.length > 3 && (
+                                  <View className={styles.testerRecordMore}>
+                                    <Text className={styles.testerRecordMoreText}>+{record.photos.length - 3}</Text>
+                                  </View>
+                                )}
+                              </View>
+                            )}
                           </View>
                         </View>
                       );
@@ -366,6 +391,22 @@ const DetailPage: React.FC = () => {
                         <Text className={styles.blindSpotText}>
                           盲区位置：{record.blindSpotDescription}
                         </Text>
+                      </View>
+                    )}
+                    {record.photos && record.photos.length > 0 && (
+                      <View className={styles.recordPhotos}>
+                        <Text className={styles.recordPhotosLabel}>现场照片</Text>
+                        <View className={styles.recordPhotoGrid}>
+                          {record.photos.map((photo, idx) => (
+                            <Image
+                              key={idx}
+                              className={styles.recordPhotoItem}
+                              src={photo}
+                              mode="aspectFill"
+                              onClick={() => handlePreviewImage(record.photos!, idx)}
+                            />
+                          ))}
+                        </View>
                       </View>
                     )}
                   </View>

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, Button, ScrollView } from '@tarojs/components';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, Button, ScrollView, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
@@ -56,6 +56,24 @@ const SharePage: React.FC = () => {
     return issues.join('、');
   };
 
+  const getFloorPhotos = (floor: number): string[] => {
+    const floorRecords = allRecords.filter(r => r.floor === floor);
+    const photos: string[] = [];
+    floorRecords.forEach(record => {
+      if (record.photos && record.photos.length > 0) {
+        photos.push(...record.photos);
+      }
+    });
+    return photos;
+  };
+
+  const handlePreviewImage = useCallback((photos: string[], index: number) => {
+    Taro.previewImage({
+      current: photos[index],
+      urls: photos
+    });
+  }, []);
+
   const generateComplaintText = useMemo(() => {
     if (!currentBuilding || poorFloors.length === 0) {
       return '';
@@ -74,6 +92,7 @@ const SharePage: React.FC = () => {
       const latestRecord = floorRecords.sort(
         (a, b) => new Date(b.testTime).getTime() - new Date(a.testTime).getTime()
       )[0];
+      const floorPhotos = getFloorPhotos(floorItem.floor);
 
       text += `${index + 1}. ${floorItem.floor}楼（综合评分：${floorItem.averageScore}分）\n`;
       text += `   问题：${issues}\n`;
@@ -85,7 +104,11 @@ const SharePage: React.FC = () => {
           text += `   - 盲区位置：${latestRecord.blindSpotDescription}\n`;
         }
       }
-      text += `   - 测试次数：${floorItem.testCount}次\n\n`;
+      text += `   - 测试次数：${floorItem.testCount}次\n`;
+      if (floorPhotos.length > 0) {
+        text += `   - 现场照片：${floorPhotos.length}张（详见附件）\n`;
+      }
+      text += `\n`;
     });
 
     text += `以上问题严重影响业主夜间出行安全，尤其是老人和小孩的安全。根据《物业管理条例》，声控灯属于公共设施，物业有责任进行维护和更换。\n\n`;
@@ -200,6 +223,8 @@ const SharePage: React.FC = () => {
                 : undefined;
               const statusConfig = repairRecord ? REPAIR_STATUS_CONFIG[repairRecord.status] : null;
 
+              const floorPhotos = getFloorPhotos(item.floor);
+
               return (
                 <View key={`${item.buildingName}-${item.floor}`} className={styles.poorFloorItem}>
                   <View className={styles.floorInfo}>
@@ -212,6 +237,24 @@ const SharePage: React.FC = () => {
                       )}
                     </View>
                     <Text className={styles.floorIssues}>{getFloorIssues(item.floor)}</Text>
+                    {floorPhotos.length > 0 && (
+                      <View className={styles.floorPhotos}>
+                        {floorPhotos.slice(0, 4).map((photo, idx) => (
+                          <Image
+                            key={idx}
+                            className={styles.floorPhoto}
+                            src={photo}
+                            mode="aspectFill"
+                            onClick={() => handlePreviewImage(floorPhotos, idx)}
+                          />
+                        ))}
+                        {floorPhotos.length > 4 && (
+                          <View className={styles.floorPhotoMore} onClick={() => handlePreviewImage(floorPhotos, 0)}>
+                            <Text className={styles.floorPhotoMoreText}>+{floorPhotos.length - 4}</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
                     {statusConfig && (
                       <View
                         className={classNames(styles.statusBadge, styles[`status-${repairRecord!.status}`])}

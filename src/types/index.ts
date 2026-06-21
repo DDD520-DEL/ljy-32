@@ -25,6 +25,7 @@ export interface TestRecord {
   duration: number;
   hasBlindSpot: boolean;
   blindSpotDescription?: string;
+  photos?: string[];
   testTime: string;
   totalScore: number;
   grade: 'excellent' | 'good' | 'poor';

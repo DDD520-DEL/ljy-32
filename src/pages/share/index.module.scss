@@ -119,6 +119,35 @@
     color: $color-text-secondary;
     margin-top: 4rpx;
   }
+
+  .floorPhotos {
+    display: flex;
+    gap: $spacing-xs;
+    margin-top: $spacing-sm;
+  }
+
+  .floorPhoto {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: $radius-sm;
+    object-fit: cover;
+  }
+
+  .floorPhotoMore {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: $radius-sm;
+    background: $color-bg-hover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .floorPhotoMoreText {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    font-weight: $font-weight-medium;
+  }
 }
 
 .complaintBadge {

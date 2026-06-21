@@ -404,3 +404,68 @@
   color: rgba($color-text-white, 0.7);
   margin-left: $spacing-xs;
 }
+
+.testerRecordPhotos {
+  display: flex;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.testerRecordPhoto {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-sm;
+  object-fit: cover;
+}
+
+.testerRecordMore {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-sm;
+  background: $color-bg-hover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.testerRecordMoreText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.recordPhotos {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.recordPhotosLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.recordPhotoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-xs;
+}
+
+.recordPhotoItem {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  border-radius: $radius-sm;
+  overflow: hidden;
+
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
