@@ -1,0 +1,29 @@
+[01:47:09.930] Server listening on port 64337, PID 22068
+[01:47:09.975] readProjectFiles, Found 43 files to read.
+[01:47:10.049] Starting PAI Cloud Dev...
+[01:47:11.130] [PAI SDK] createCloudSession response: {
+  "code": 0,
+  "msg": "success",
+  "sandboxId": "vefaas-f0vkicge-pyw70jixna-d8rd47g2j5h64opjpotg-sandbox",
+  "endpoint": "https://sd62opo6oqou1ckhsuo00.apigateway-cn-beijing.volceapi.com"
+}
+[01:47:11.289] [PAI SDK] cloudServer.start called, appId: pai-preview-trae-0f9f8fad
+[01:47:11.740] [PAI SDK] Received event: log {"content":"\n> taro_template@1.0.0 dev:h5\n> npm run build:h5 -- --watch\n\n","timestamp":1781977631753}
+[01:47:11.843] [PAI SDK] Received event: log {"content":"\n> taro_template@1.0.0 build:h5\n> taro build --type h5 --watch\n\n","timestamp":1781977631858}
+[01:47:12.201] [PAI SDK] Received event: log {"content":"👽 Taro v4.1.9\n\n","timestamp":1781977632216}
+[01:47:13.409] [PAI SDK] Received event: log {"content":"Tips:\n1. 建议开启持久化缓存功能，能有效提升二次编译速度，详情请参考: https://docs.taro.zone/docs/config-detail#cache。\n\n\n","timestamp":1781977633424}
+[01:47:14.494] [PAI SDK] Received event: log {"content":"- 即将开始启动编译，请稍等~\n","timestamp":1781977634509}
+[01:47:19.474] [Preview Server] Frontend connected, clients size = 1
+[01:47:28.920] [PAI SDK] Received event: log {"content":"✅  编译成功 6/21/2026, 1:47:28 AM\n\n","timestamp":1781977648935}
+[01:47:28.922] [PAI SDK] cloudServer.start response: {
+  "status": "running",
+  "msg": "Cloud Server started successfully.",
+  "hash": "pai-preview-trae-0f9f8fad"
+}
+[02:11:06.443] [Preview Server] Frontend disconnected, clients size = 1
+[02:11:06.701] [Preview Server] Frontend connected, clients size = 1
+[02:11:06.702] Sending cached status to new connection, lastStatusMessage = {"event":"status_change","message":{"url":"https://sd62opo6oqou1ckhsuo00.apigateway-cn-beijing.volceapi.com/?faasInstanceName=vefaas-f0vkicge-pyw70jixna-d8rd47g2j5h64opjpotg-sandbox&hash=pai-preview-trae-0f9f8fad","schema":"aipa://preview?type=pai&aipa_id=pai-preview-trae-0f9f8fad&uuid=5c045f0f-cd8d-4fbc-9189-fe5d4c366c84","status":"running","msg":"Cloud Server started successfully.","framework":"taro"}}
+[02:52:01.209] [PAI SDK] WebSocket closed, reconnecting (1/3)...
+[17:39:41.090] Heartbeat timeout.
+[17:39:41.090] Shutting down...
+[17:39:41.091] Stopping Cloud Dev...

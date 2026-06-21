@@ -1,0 +1,218 @@
+import React, { useState, useMemo } from 'react';
+import { View, Text, Button, ScrollView } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
+import styles from './index.module.scss';
+import { useData } from '../../store/DataContext';
+import { SENSITIVITY_CONFIG } from '../../types';
+
+const SharePage: React.FC = () => {
+  const {
+    currentBuildingId,
+    getCurrentBuilding,
+    getRecordsByCurrentBuilding,
+    getRankList
+  } = useData();
+
+  const currentBuilding = getCurrentBuilding();
+  const allRecords = getRecordsByCurrentBuilding();
+  const rankList = getRankList();
+
+  const [, forceUpdate] = useState(0);
+
+  useDidShow(() => {
+    console.log('[SharePage] did show');
+    forceUpdate(prev => prev + 1);
+  });
+
+  const poorFloors = useMemo(() => {
+    return rankList.filter(r => r.grade === 'poor').sort((a, b) => a.averageScore - b.averageScore);
+  }, [rankList]);
+
+  const getFloorIssues = (floor: number): string => {
+    const floorRecords = allRecords.filter(r => r.floor === floor);
+    if (floorRecords.length === 0) return '';
+
+    const issues: string[] = [];
+    const avgSensitivity = floorRecords.reduce((sum, r) => sum + r.sensitivityScore, 0) / floorRecords.length;
+    const avgDuration = floorRecords.reduce((sum, r) => sum + r.duration, 0) / floorRecords.length;
+    const hasBlindSpot = floorRecords.some(r => r.hasBlindSpot);
+
+    if (avgSensitivity < 50) {
+      issues.push('灵敏度差');
+    }
+    if (avgDuration < 20 || avgDuration > 90) {
+      issues.push('时长不合理');
+    }
+    if (hasBlindSpot) {
+      issues.push('存在盲区');
+    }
+
+    return issues.join('、');
+  };
+
+  const generateComplaintText = useMemo(() => {
+    if (!currentBuilding || poorFloors.length === 0) {
+      return '';
+    }
+
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+
+    let text = `【楼道声控灯问题投诉】\n\n`;
+    text += `尊敬的物业您好：\n\n`;
+    text += `我们是${currentBuilding.address}${currentBuilding.name}的业主。近期我们对本楼栋各楼层的声控灯进行了详细测试，发现以下楼层的声控灯存在严重问题，急需维修或更换：\n\n`;
+
+    poorFloors.forEach((floorItem, index) => {
+      const issues = getFloorIssues(floorItem.floor);
+      const floorRecords = allRecords.filter(r => r.floor === floorItem.floor);
+      const latestRecord = floorRecords.sort(
+        (a, b) => new Date(b.testTime).getTime() - new Date(a.testTime).getTime()
+      )[0];
+
+      text += `${index + 1}. ${floorItem.floor}楼（综合评分：${floorItem.averageScore}分）\n`;
+      text += `   问题：${issues}\n`;
+      if (latestRecord) {
+        const sens = SENSITIVITY_CONFIG[latestRecord.sensitivityLevel];
+        text += `   - 灵敏度：${sens.label}（${sens.description}）\n`;
+        text += `   - 亮灯时长：${latestRecord.duration}秒\n`;
+        if (latestRecord.hasBlindSpot && latestRecord.blindSpotDescription) {
+          text += `   - 盲区位置：${latestRecord.blindSpotDescription}\n`;
+        }
+      }
+      text += `   - 测试次数：${floorItem.testCount}次\n\n`;
+    });
+
+    text += `以上问题严重影响业主夜间出行安全，尤其是老人和小孩的安全。根据《物业管理条例》，声控灯属于公共设施，物业有责任进行维护和更换。\n\n`;
+    text += `恳请物业尽快安排人员进行检查和维修，对于严重老化的声控灯建议直接更换为新型节能声控灯。\n\n`;
+    text += `期待物业的积极回应和处理！\n\n`;
+    text += `${currentBuilding.name}业主\n`;
+    text += `${dateStr}`;
+
+    return text;
+  }, [currentBuilding, poorFloors, allRecords]);
+
+  const handleCopy = async () => {
+    if (!generateComplaintText) {
+      Taro.showToast({ title: '暂无需要投诉的内容', icon: 'none' });
+      return;
+    }
+
+    try {
+      await Taro.setClipboardData({
+        data: generateComplaintText
+      });
+      Taro.showToast({ title: '已复制到剪贴板', icon: 'success' });
+      console.log('[SharePage] 文案已复制');
+    } catch (e) {
+      console.error('[SharePage] 复制失败:', e);
+      Taro.showToast({ title: '复制失败，请重试', icon: 'none' });
+    }
+  };
+
+  const handleGoTest = () => {
+    Taro.switchTab({ url: '/pages/record/index' });
+  };
+
+  const handleViewRank = () => {
+    Taro.switchTab({ url: '/pages/rank/index' });
+  };
+
+  return (
+    <ScrollView className={styles.container} scrollY>
+      <View className={styles.header}>
+        <Text className={styles.title}>投诉与分享</Text>
+        <Text className={styles.subtitle}>
+          {currentBuilding ? `${currentBuilding.name} · 推动更换老旧声控灯` : '请先选择楼栋'}
+        </Text>
+      </View>
+
+      {poorFloors.length > 0 ? (
+        <>
+          <View className={styles.warningCard}>
+            <Text className={styles.warningTitle}>⚠️ 需要关注的问题</Text>
+            <Text className={styles.warningDesc}>
+              以下楼层的声控灯存在严重问题，建议尽快向物业投诉，要求维修或更换。
+              老旧损坏的声控灯会严重影响夜间出行安全。
+            </Text>
+          </View>
+
+          <View className={styles.statsRow}>
+            <View className={styles.statCard}>
+              <Text className={styles.statValue}>{poorFloors.length}</Text>
+              <Text className={styles.statLabel}>待更换楼层</Text>
+            </View>
+            <View className={styles.statCard}>
+              <Text className={styles.statValue}>{allRecords.length}</Text>
+              <Text className={styles.statLabel}>测试记录</Text>
+            </View>
+          </View>
+
+          <Text className={styles.sectionTitle}>📋 问题楼层列表</Text>
+          <View className={styles.poorFloorsList}>
+            {poorFloors.map(item => (
+              <View key={`${item.buildingName}-${item.floor}`} className={styles.poorFloorItem}>
+                <View className={styles.floorInfo}>
+                  <Text className={styles.floorNumber}>{item.floor}楼</Text>
+                  <Text className={styles.floorIssues}>{getFloorIssues(item.floor)}</Text>
+                </View>
+                <Text className={styles.floorScore}>{item.averageScore}分</Text>
+              </View>
+            ))}
+          </View>
+
+          <Text className={styles.sectionTitle}>✉️ 投诉文案（一键复制）</Text>
+          <View className={styles.complaintContent}>
+            <View className={styles.contentHeader}>
+              <Text style={{ fontSize: '28rpx', fontWeight: '600', color: '#1E293B' }}>
+                生成的投诉文案
+              </Text>
+              <Button className={styles.copyBtn} onClick={handleCopy}>
+                一键复制
+              </Button>
+            </View>
+            <ScrollView scrollY style={{ maxHeight: '600rpx' }}>
+              <Text className={styles.textContent}>{generateComplaintText}</Text>
+            </ScrollView>
+          </View>
+
+          <View className={styles.actionButtons}>
+            <Button className={styles.actionBtn + ' ' + styles.primary} onClick={handleCopy}>
+              复制文案发物业群
+            </Button>
+            <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleViewRank}>
+              查看完整排行榜
+            </Button>
+          </View>
+
+          <View className={styles.tips}>
+            <Text className={styles.tipsTitle}>💡 使用提示</Text>
+            <Text className={styles.tipsText}>
+              1. 点击"一键复制"按钮复制文案{'\n'}
+              2. 打开微信物业群，粘贴发送{'\n'}
+              3. 可以邀请邻居一起测试，数据更有说服力{'\n'}
+              4. 持续记录，跟踪物业处理进度
+            </Text>
+          </View>
+        </>
+      ) : (
+        <View className={styles.emptyState}>
+          <Text className={styles.emptyIcon}>🎉</Text>
+          <Text className={styles.emptyText}>太棒了！暂无需要投诉的楼层</Text>
+          <Text className={styles.emptyHint}>
+            快去测试更多楼层，收集数据推动问题解决吧！
+          </Text>
+          <View className={styles.actionButtons}>
+            <Button className={styles.actionBtn + ' ' + styles.primary} onClick={handleGoTest}>
+              开始测试
+            </Button>
+            <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleViewRank}>
+              查看排行榜
+            </Button>
+          </View>
+        </View>
+      )}
+    </ScrollView>
+  );
+};
+
+export default SharePage;

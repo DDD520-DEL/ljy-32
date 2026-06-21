@@ -1,0 +1,132 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.floorInfo {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-sm;
+}
+
+.floorNumber {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.buildingName {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.detailLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  min-width: 100rpx;
+}
+
+.detailValue {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.detailValueText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.sensitivityLevel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.sensitivityDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.hasBlind {
+  color: $color-error;
+  font-weight: $font-weight-medium;
+}
+
+.noBlind {
+  color: $color-success;
+  font-weight: $font-weight-medium;
+}
+
+.blindSpotDesc {
+  background: rgba($color-error, 0.05);
+  padding: $spacing-sm;
+  border-radius: $radius-sm;
+}
+
+.blindSpotText {
+  font-size: $font-size-sm;
+  color: $color-error;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.testTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.deleteBtn {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  padding: $spacing-xs;
+
+  &:active {
+    color: $color-error;
+  }
+}

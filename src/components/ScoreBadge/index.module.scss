@@ -1,0 +1,62 @@
+@use '@/styles/variables.scss' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-round;
+  font-weight: $font-weight-semibold;
+
+  &.small {
+    padding: 4rpx $spacing-xs;
+    .score {
+      font-size: $font-size-sm;
+    }
+    .label {
+      font-size: $font-size-xs;
+    }
+  }
+
+  &.medium {
+    .score {
+      font-size: $font-size-md;
+    }
+    .label {
+      font-size: $font-size-sm;
+    }
+  }
+
+  &.large {
+    padding: $spacing-sm $spacing-md;
+    .score {
+      font-size: $font-size-xl;
+    }
+    .label {
+      font-size: $font-size-md;
+    }
+  }
+
+  &.excellent {
+    background: rgba($color-score-excellent, 0.1);
+    color: $color-score-excellent;
+  }
+
+  &.good {
+    background: rgba($color-score-good, 0.1);
+    color: $color-score-good;
+  }
+
+  &.poor {
+    background: rgba($color-score-poor, 0.1);
+    color: $color-score-poor;
+  }
+}
+
+.score {
+  font-weight: $font-weight-bold;
+}
+
+.label {
+  opacity: 0.9;
+}

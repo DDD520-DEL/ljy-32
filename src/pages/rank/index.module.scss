@@ -1,0 +1,214 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: 120rpx;
+  background: linear-gradient(180deg, rgba($color-primary, 0.06) 0%, $color-bg-page 20%);
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.summaryCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.2);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.summaryItem {
+  .value {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+    margin-bottom: 4rpx;
+  }
+
+  .label {
+    font-size: $font-size-xs;
+    color: rgba($color-text-white, 0.85);
+  }
+}
+
+.filterBar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-button;
+  background: $color-bg-card;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.active {
+    background: rgba($color-primary, 0.1);
+    color: $color-primary;
+    border-color: $color-primary;
+  }
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.top3Section {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.top3Container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: $spacing-md;
+  padding: $spacing-lg 0;
+}
+
+.podiumItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 200rpx;
+
+  &.first {
+    order: 2;
+  }
+
+  &.second {
+    order: 1;
+  }
+
+  &.third {
+    order: 3;
+  }
+}
+
+.podiumBadge {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-sm;
+
+  &.gold {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    width: 100rpx;
+    height: 100rpx;
+  }
+
+  &.silver {
+    background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+  }
+
+  &.bronze {
+    background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+  }
+}
+
+.podiumRank {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.podiumFloor {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.podiumScore {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.podiumBase {
+  width: 100%;
+  border-radius: $radius-md $radius-md 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-lg;
+
+  &.gold {
+    height: 160rpx;
+    background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+  }
+
+  &.silver {
+    height: 120rpx;
+    background: linear-gradient(180deg, #C0C0C0 0%, #A9A9A9 100%);
+  }
+
+  &.bronze {
+    height: 100rpx;
+    background: linear-gradient(180deg, #CD7F32 0%, #8B4513 100%);
+  }
+}
+
+.rankList {
+  margin-top: $spacing-lg;
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+
+  .emptyIcon {
+    font-size: 120rpx;
+    margin-bottom: $spacing-md;
+    opacity: 0.3;
+  }
+
+  .emptyText {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .emptyHint {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}

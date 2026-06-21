@@ -1,0 +1,85 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.rankBadge {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.gold {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    box-shadow: 0 4rpx 16rpx rgba(255, 165, 0, 0.3);
+  }
+
+  &.silver {
+    background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+    box-shadow: 0 4rpx 16rpx rgba(169, 169, 169, 0.3);
+  }
+
+  &.bronze {
+    background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+    box-shadow: 0 4rpx 16rpx rgba(139, 69, 19, 0.3);
+  }
+
+  &.normal {
+    background: $color-bg-hover;
+  }
+}
+
+.rankText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+
+  .normal & {
+    color: $color-text-secondary;
+  }
+}
+
+.floorInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.floorRow {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-sm;
+}
+
+.floorNumber {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.testCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.buildingName {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
