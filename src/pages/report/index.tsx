@@ -24,6 +24,11 @@ const GRADE_LABELS = {
   none: '无数据'
 };
 
+const CANVAS_WIDTH = 750;
+const PADDING = 40;
+const CARD_GAP = 25;
+const CARD_CONTENT_PAD = 30;
+
 const ReportPage: React.FC = () => {
   const router = useRouter();
   const { getReportData, getCurrentBuilding } = useData();
@@ -42,7 +47,7 @@ const ReportPage: React.FC = () => {
   }, [reportType, getReportData]);
 
   useDidShow(() => {
-    console.log('[ReportPage] did show');
+    console.log('[ReportPage] did show, reportType:', reportType, 'hasReport:', !!report);
   });
 
   useShareAppMessage(() => {
@@ -70,7 +75,30 @@ const ReportPage: React.FC = () => {
   }, []);
 
   const handleSaveImage = useCallback(async () => {
-    if (!report) return;
+    if (!report) {
+      Taro.showToast({ title: '暂无数据可保存', icon: 'none' });
+      return;
+    }
+
+    try {
+      const setting = await Taro.getSetting();
+      if (setting.authSetting && setting.authSetting['scope.writePhotosAlbum'] === false) {
+        Taro.showModal({
+          title: '需要相册权限',
+          content: '需要相册权限才能保存图片，请在设置中开启',
+          confirmText: '去设置',
+          success: (res) => {
+            if (res.confirm) {
+              Taro.openSetting();
+            }
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn('[Report] getSetting error:', e);
+    }
+
     setIsSaving(true);
 
     try {
@@ -80,28 +108,44 @@ const ReportPage: React.FC = () => {
         .fields({ node: true, size: true })
         .exec(async (res) => {
           try {
-            if (!res || !res[0]) {
-              throw new Error('Canvas 未找到');
+            if (!res || !res[0] || !res[0].node) {
+              throw new Error('Canvas 节点未找到');
             }
 
             const canvas = res[0].node;
             const ctx = canvas.getContext('2d');
-            const dpr = Taro.getSystemInfoSync().pixelRatio || 2;
+            if (!ctx) {
+              throw new Error('Canvas 上下文获取失败');
+            }
 
-            const canvasWidth = 750;
-            const canvasHeight = 2400;
-            canvas.width = canvasWidth * dpr;
+            const dpr = Taro.getSystemInfoSync().pixelRatio || 2;
+            const contentHeight = calculateReportHeight(report, CANVAS_WIDTH);
+            const canvasHeight = contentHeight;
+
+            canvas.width = CANVAS_WIDTH * dpr;
             canvas.height = canvasHeight * dpr;
             ctx.scale(dpr, dpr);
 
-            await drawReport(ctx, report, canvasWidth, canvasHeight);
+            console.log('[Report] canvas size:', CANVAS_WIDTH, 'x', canvasHeight, 'dpr:', dpr);
+
+            drawReport(ctx, report, CANVAS_WIDTH, canvasHeight);
 
             setTimeout(() => {
               Taro.canvasToTempFilePath({
                 canvas,
                 canvasId,
+                x: 0,
+                y: 0,
+                width: CANVAS_WIDTH,
+                height: canvasHeight,
+                destWidth: CANVAS_WIDTH * dpr,
+                destHeight: canvasHeight * dpr,
+                fileType: 'png',
+                quality: 1,
                 success: (tempRes) => {
                   const tempPath = tempRes.tempFilePath;
+                  console.log('[Report] tempPath:', tempPath);
+
                   Taro.saveImageToPhotosAlbum({
                     filePath: tempPath,
                     success: () => {
@@ -109,11 +153,11 @@ const ReportPage: React.FC = () => {
                       setIsSaving(false);
                     },
                     fail: (saveErr) => {
-                      console.error('保存失败', saveErr);
-                      if (saveErr.errMsg?.includes('auth')) {
+                      console.warn('[Report] saveImage fail:', saveErr);
+                      if (saveErr.errMsg?.includes('auth') || saveErr.errMsg?.includes('authorize')) {
                         Taro.showModal({
                           title: '需要相册权限',
-                          content: '请在设置中开启保存到相册的权限',
+                          content: '请在设置中开启保存到相册的权限，即可保存图片分享',
                           confirmText: '去设置',
                           success: (modalRes) => {
                             if (modalRes.confirm) {
@@ -134,59 +178,153 @@ const ReportPage: React.FC = () => {
                   });
                 },
                 fail: (err) => {
-                  console.error('生成图片失败', err);
+                  console.error('[Report] canvasToTempFilePath fail:', err);
                   Taro.showToast({ title: '生成图片失败', icon: 'none' });
                   setIsSaving(false);
                 }
               });
             }, 300);
           } catch (e) {
-            console.error('绘制失败', e);
+            console.error('[Report] draw error:', e);
             Taro.showToast({ title: '生成图片失败', icon: 'none' });
             setIsSaving(false);
           }
         });
     } catch (e) {
-      console.error('保存失败', e);
+      console.error('[Report] save image error:', e);
       Taro.showToast({ title: '保存失败', icon: 'none' });
       setIsSaving(false);
     }
   }, [report]);
 
-  const drawReport = async (
+  const calculateReportHeight = (data: ReportData, width: number): number => {
+    const padding = PADDING;
+    let y = 0;
+
+    y += 60;
+    y += calcHeaderHeight(data, width, padding);
+    y += CARD_GAP;
+    y += calcStatsHeight(data, width, padding);
+    y += CARD_GAP;
+    y += calcTrendHeight(data, width, padding);
+    y += CARD_GAP;
+    y += calcSensitivityAndGradeHeight(data, width, padding);
+    y += CARD_GAP;
+    y += calcFloorChangesHeight(data, width, padding);
+    y += CARD_GAP;
+    y += calcRankSectionHeight(data, width, padding);
+
+    if (data.blindSpotCount > 0) {
+      y += CARD_GAP;
+      y += calcBlindSpotHeight(data, width, padding);
+    }
+
+    y += CARD_GAP;
+    y += calcContributorsHeight(data, width, padding);
+    y += CARD_GAP;
+
+    y += 60;
+
+    y += 100;
+    return y;
+  };
+
+  const calcCardHeight = (contentHeight: number): number => {
+    return contentHeight + CARD_CONTENT_PAD * 2;
+  };
+
+  const calcSectionTitleHeight = (): number => 30;
+
+  const calcHeaderHeight = (_data: ReportData, _width: number, _padding: number): number => {
+    return calcCardHeight(200);
+  };
+
+  const calcStatsHeight = (_data: ReportData, _width: number, _padding: number): number => {
+    return calcCardHeight(calcSectionTitleHeight() + 20 + 2 * 115);
+  };
+
+  const calcTrendHeight = (_data: ReportData, _width: number, _padding: number): number => {
+    return calcCardHeight(calcSectionTitleHeight() + 20 + 270);
+  };
+
+  const calcSensitivityAndGradeHeight = (_data: ReportData, _width: number, _padding: number): number => {
+    const sensHeight = 4 * 48;
+    const gradeHeight = 140;
+    return calcCardHeight(2 * calcSectionTitleHeight() + 30 + sensHeight + gradeHeight);
+  };
+
+  const calcFloorChangesHeight = (data: ReportData, _width: number, _padding: number): number => {
+    const count = Math.min(
+      data.declinedFloors.length + data.improvedFloors.length + data.newFloors.length,
+      6
+    );
+    if (count === 0) {
+      return calcCardHeight(calcSectionTitleHeight() + 20 + 80);
+    }
+    return calcCardHeight(calcSectionTitleHeight() + 10 + count * 58);
+  };
+
+  const calcRankSectionHeight = (data: ReportData, _width: number, _padding: number): number => {
+    const maxCount = Math.max(data.topFloors.length, data.bottomFloors.length, 1);
+    const listHeight = 30 + maxCount * 50;
+    return calcCardHeight(calcSectionTitleHeight() + 10 + listHeight);
+  };
+
+  const calcBlindSpotHeight = (_data: ReportData, _width: number, _padding: number): number => {
+    return calcCardHeight(calcSectionTitleHeight() + 20 + 100);
+  };
+
+  const calcContributorsHeight = (data: ReportData, _width: number, _padding: number): number => {
+    if (data.contributors.length === 0) {
+      return calcCardHeight(calcSectionTitleHeight() + 20 + 80);
+    }
+    return calcCardHeight(calcSectionTitleHeight() + 10 + data.contributors.length * 58);
+  };
+
+  const drawReport = (
     ctx: CanvasRenderingContext2D,
     data: ReportData,
     width: number,
-    height: number
+    _height: number
   ) => {
-    const padding = 40;
-    let y = 0;
+    const padding = PADDING;
+    let y = 30;
 
     ctx.fillStyle = '#F8FAFC';
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, width, _height);
 
-    y = drawBackground(ctx, width, y);
+    drawBackground(ctx, width);
+
+    y += 30;
     y = drawHeader(ctx, data, width, padding, y);
+    y += CARD_GAP;
     y = drawStats(ctx, data, width, padding, y);
+    y += CARD_GAP;
     y = drawTrend(ctx, data, width, padding, y);
-    y = drawSensitivityDist(ctx, data, width, padding, y);
-    y = drawGradeDist(ctx, data, width, padding, y);
+    y += CARD_GAP;
+    y = drawSensitivityAndGrade(ctx, data, width, padding, y);
+    y += CARD_GAP;
     y = drawFloorChanges(ctx, data, width, padding, y);
+    y += CARD_GAP;
     y = drawRankSection(ctx, data, width, padding, y);
+
     if (data.blindSpotCount > 0) {
+      y += CARD_GAP;
       y = drawBlindSpot(ctx, data, width, padding, y);
     }
+
+    y += CARD_GAP;
     y = drawContributors(ctx, data, width, padding, y);
-    drawFooter(ctx, width, y);
+
+    drawFooter(ctx, width, y + 20);
   };
 
-  const drawBackground = (ctx: CanvasRenderingContext2D, width: number, y: number): number => {
+  const drawBackground = (ctx: CanvasRenderingContext2D, width: number) => {
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(255, 107, 53, 0.12)');
     gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, 300);
-    return y;
   };
 
   const drawRoundedRect = (
@@ -206,13 +344,13 @@ const ReportPage: React.FC = () => {
     ctx.closePath();
   };
 
-  const drawCardStart = (
+  const drawCardBg = (
     ctx: CanvasRenderingContext2D,
     width: number,
     padding: number,
     y: number,
     height: number
-  ): number => {
+  ) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.06)';
     ctx.shadowBlur = 8;
@@ -220,7 +358,6 @@ const ReportPage: React.FC = () => {
     drawRoundedRect(ctx, padding, y, width - padding * 2, height, 20);
     ctx.fill();
     ctx.shadowColor = 'transparent';
-    return y + 30;
   };
 
   const drawSectionTitle = (
@@ -232,7 +369,7 @@ const ReportPage: React.FC = () => {
   ): number => {
     ctx.font = 'bold 28px system-ui';
     ctx.fillStyle = '#1E293B';
-    ctx.fillText(`${icon}  ${title}`, padding + 30, y);
+    ctx.fillText(`${icon}  ${title}`, padding + CARD_CONTENT_PAD, y);
     return y + 30;
   };
 
@@ -243,39 +380,41 @@ const ReportPage: React.FC = () => {
     padding: number,
     y: number
   ): number => {
-    const headerH = 200;
-    y = drawCardStart(ctx, width, padding, y + 30, headerH);
+    const cardH = 200 + CARD_CONTENT_PAD * 2;
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
 
     ctx.font = 'bold 40px system-ui';
     ctx.fillStyle = '#1E293B';
-    ctx.fillText(data.buildingName, padding + 30, y);
-    y += 50;
+    ctx.fillText(data.buildingName, padding + CARD_CONTENT_PAD, cy + 10);
+    cy += 50;
 
     ctx.font = '22px system-ui';
     ctx.fillStyle = '#64748B';
-    ctx.fillText(`${data.address} · 共${data.totalFloors}层`, padding + 30, y);
-    y += 40;
+    ctx.fillText(`${data.address} · 共${data.totalFloors}层`, padding + CARD_CONTENT_PAD, cy + 10);
+    cy += 40;
 
-    const tagW = 320;
+    const tagW = 380;
     const tagH = 44;
-    const gradient = ctx.createLinearGradient(padding + 30, 0, padding + 30 + tagW, 0);
+    const gradient = ctx.createLinearGradient(padding + CARD_CONTENT_PAD, 0, padding + CARD_CONTENT_PAD + tagW, 0);
     gradient.addColorStop(0, '#FF6B35');
     gradient.addColorStop(1, '#FF8C5A');
     ctx.fillStyle = gradient;
-    drawRoundedRect(ctx, padding + 30, y, tagW, tagH, 22);
+    drawRoundedRect(ctx, padding + CARD_CONTENT_PAD, cy, tagW, tagH, 22);
     ctx.fill();
+
     ctx.font = 'bold 22px system-ui';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center';
-    ctx.fillText(data.periodLabel, padding + 30 + tagW / 2, y + 30);
+    ctx.fillText(data.periodLabel, padding + CARD_CONTENT_PAD + tagW / 2, cy + 30);
     ctx.textAlign = 'left';
-    y += 60;
+    cy += 60;
 
     ctx.font = '18px system-ui';
     ctx.fillStyle = '#94A3B8';
-    ctx.fillText(`生成时间: ${formatReportDateTime(data.generateTime)}`, padding + 30, y);
+    ctx.fillText(`生成时间: ${formatReportDateTime(data.generateTime)}`, padding + CARD_CONTENT_PAD, cy + 10);
 
-    return y + 50;
+    return y + cardH;
   };
 
   const drawStats = (
@@ -285,9 +424,11 @@ const ReportPage: React.FC = () => {
     padding: number,
     y: number
   ): number => {
-    const cardH = 320;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '📊', '核心数据', padding, startY);
+    const cardH = calcCardHeight(30 + 20 + 2 * 115);
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
+
+    cy = drawSectionTitle(ctx, '📊', '核心数据', padding, cy);
     cy += 20;
 
     const stats = [
@@ -297,13 +438,13 @@ const ReportPage: React.FC = () => {
       { label: '待改进', value: data.poorCount, change: data.poorCount - data.poorCountPrev, color: '#EF4444', unit: '次' }
     ];
 
-    const cellW = (width - padding * 2 - 60) / 2;
+    const cellW = (width - padding * 2 - CARD_CONTENT_PAD * 2 - 20) / 2;
     const cellH = 100;
 
     stats.forEach((stat, idx) => {
       const col = idx % 2;
       const row = Math.floor(idx / 2);
-      const cx = padding + 30 + col * (cellW + 20);
+      const cx = padding + CARD_CONTENT_PAD + col * (cellW + 20);
       const ccy = cy + row * (cellH + 15);
 
       ctx.fillStyle = '#F8FAFC';
@@ -316,7 +457,7 @@ const ReportPage: React.FC = () => {
 
       ctx.font = 'bold 38px system-ui';
       ctx.fillStyle = stat.color;
-      ctx.fillText(`${stat.value}`, cx + 18, ccy + 76);
+      ctx.fillText(String(stat.value), cx + 18, ccy + 76);
 
       const changeText = stat.change > 0 ? `↑${stat.change}` : stat.change < 0 ? `↓${Math.abs(stat.change)}` : '—';
       const changeColor = stat.change > 0 ? '#10B981' : stat.change < 0 ? '#EF4444' : '#94A3B8';
@@ -331,7 +472,7 @@ const ReportPage: React.FC = () => {
       ctx.fillText(stat.unit, cx + cellW - unitLen - 18, ccy + 76);
     });
 
-    return y + cardH + 25;
+    return y + cardH;
   };
 
   const drawTrend = (
@@ -342,58 +483,61 @@ const ReportPage: React.FC = () => {
     y: number
   ): number => {
     const trend = data.sensitivityTrend;
-    if (!trend || trend.length === 0) return y;
+    const cardH = calcCardHeight(30 + 20 + 270);
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
 
-    const cardH = 340;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '📈', '灵敏度变化趋势', padding, startY);
+    cy = drawSectionTitle(ctx, '📈', '灵敏度变化趋势', padding, cy);
     cy += 20;
 
-    const chartX = padding + 30;
-    const chartW = width - padding * 2 - 60;
-    const chartH = 200;
+    const chartX = padding + CARD_CONTENT_PAD;
+    const chartW = width - padding * 2 - CARD_CONTENT_PAD * 2;
+    const chartH = 220;
     const chartY = cy;
 
     ctx.fillStyle = '#F8FAFC';
     drawRoundedRect(ctx, chartX, chartY, chartW, chartH + 50, 14);
     ctx.fill();
 
-    const maxScore = 100;
-    const minScore = 0;
-    const barGap = 12;
-    const barWidth = (chartW - 40 - barGap * (trend.length - 1)) / trend.length;
+    if (trend && trend.length > 0) {
+      const barGap = 12;
+      const barWidth = Math.min(40, (chartW - 40 - barGap * (trend.length - 1)) / trend.length);
+      const totalBarsW = barWidth * trend.length + barGap * (trend.length - 1);
+      const startX = chartX + (chartW - totalBarsW) / 2;
+      const maxScore = 100;
 
-    trend.forEach((item, idx) => {
-      const bx = chartX + 20 + idx * (barWidth + barGap);
-      const barH = item.avgScore > 0 ? Math.max(6, (item.avgScore - minScore) / (maxScore - minScore) * (chartH - 50)) : 0;
-      const by = chartY + chartH - barH;
+      trend.forEach((item, idx) => {
+        const bx = startX + idx * (barWidth + barGap);
+        const barH = item.avgScore > 0 ? Math.max(6, (item.avgScore / maxScore) * (chartH - 60)) : 0;
+        const by = chartY + chartH - barH - 10;
 
-      const gradient = ctx.createLinearGradient(0, by, 0, chartY + chartH);
-      gradient.addColorStop(0, '#FF6B35');
-      gradient.addColorStop(1, '#FFB088');
-      ctx.fillStyle = gradient;
-      drawRoundedRect(ctx, bx, by, barWidth, barH, 4);
-      ctx.fill();
+        const gradient = ctx.createLinearGradient(0, by, 0, chartY + chartH - 10);
+        gradient.addColorStop(0, '#FF6B35');
+        gradient.addColorStop(1, '#FFB088');
+        ctx.fillStyle = gradient;
+        drawRoundedRect(ctx, bx, by, barWidth, barH, 4);
+        ctx.fill();
 
-      if (item.avgScore > 0) {
-        ctx.font = 'bold 16px system-ui';
-        ctx.fillStyle = '#FF6B35';
+        if (item.avgScore > 0) {
+          ctx.font = 'bold 16px system-ui';
+          ctx.fillStyle = '#FF6B35';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(item.avgScore), bx + barWidth / 2, by - 8);
+          ctx.textAlign = 'left';
+        }
+
+        ctx.font = '16px system-ui';
+        ctx.fillStyle = '#94A3B8';
         ctx.textAlign = 'center';
-        ctx.fillText(String(item.avgScore), bx + barWidth / 2, by - 8);
+        ctx.fillText(item.label, bx + barWidth / 2, chartY + chartH + 28);
         ctx.textAlign = 'left';
-      }
+      });
+    }
 
-      ctx.font = '16px system-ui';
-      ctx.fillStyle = '#94A3B8';
-      ctx.textAlign = 'center';
-      ctx.fillText(item.label, bx + barWidth / 2, chartY + chartH + 28);
-      ctx.textAlign = 'left';
-    });
-
-    return y + cardH + 25;
+    return y + cardH;
   };
 
-  const drawSensitivityDist = (
+  const drawSensitivityAndGrade = (
     ctx: CanvasRenderingContext2D,
     data: ReportData,
     width: number,
@@ -403,10 +547,15 @@ const ReportPage: React.FC = () => {
     const levels: SensitivityLevel[] = ['whisper', 'normal', 'loud', 'shout'];
     const total = Object.values(data.sensitivityLevelDist).reduce((a, b) => a + b, 0) || 1;
 
-    const cardH = 270;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '🎚️', '灵敏度分布', padding, startY);
-    cy += 20;
+    const sensHeight = levels.length * 48;
+    const gradeHeight = 140;
+    const cardH = calcCardHeight(2 * 30 + 30 + sensHeight + gradeHeight);
+
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
+
+    cy = drawSectionTitle(ctx, '🎚️', '灵敏度分布', padding, cy);
+    cy += 16;
 
     levels.forEach((level, idx) => {
       const count = data.sensitivityLevelDist[level];
@@ -417,11 +566,10 @@ const ReportPage: React.FC = () => {
 
       ctx.font = '20px system-ui';
       ctx.fillStyle = '#1E293B';
-      ctx.textAlign = 'left';
-      ctx.fillText(config.label, padding + 30, by + 22);
+      ctx.fillText(config.label, padding + CARD_CONTENT_PAD, by + 22);
 
-      const trackX = padding + 120;
-      const trackW = width - padding * 2 - 280;
+      const trackX = padding + CARD_CONTENT_PAD + 90;
+      const trackW = width - padding * 2 - CARD_CONTENT_PAD * 2 - 180;
       ctx.fillStyle = '#F1F5F9';
       drawRoundedRect(ctx, trackX, by + 8, trackW, 22, 11);
       ctx.fill();
@@ -436,24 +584,14 @@ const ReportPage: React.FC = () => {
       ctx.font = 'bold 20px system-ui';
       ctx.fillStyle = '#1E293B';
       ctx.textAlign = 'right';
-      ctx.fillText(`${count}次`, width - padding - 30, by + 22);
+      ctx.fillText(`${count}次`, width - padding - CARD_CONTENT_PAD, by + 22);
       ctx.textAlign = 'left';
     });
 
-    return y + cardH + 25;
-  };
+    cy += sensHeight + 20;
 
-  const drawGradeDist = (
-    ctx: CanvasRenderingContext2D,
-    data: ReportData,
-    width: number,
-    padding: number,
-    y: number
-  ): number => {
-    const cardH = 200;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '🏆', '质量等级统计', padding, startY);
-    cy += 20;
+    cy = drawSectionTitle(ctx, '🏆', '质量等级统计', padding, cy);
+    cy += 16;
 
     const grades = [
       { key: 'excellent', label: '优秀', icon: '🌟', count: data.excellentCount, color: COLORS.rankGold },
@@ -461,15 +599,15 @@ const ReportPage: React.FC = () => {
       { key: 'poor', label: '待改进', icon: '⚠️', count: data.poorCount, color: '#EF4444' }
     ];
 
-    const cellW = (width - padding * 2 - 80) / 3;
+    const cellW = (width - padding * 2 - CARD_CONTENT_PAD * 2 - 20) / 3;
     grades.forEach((g, idx) => {
-      const cx = padding + 30 + idx * (cellW + 10);
+      const cx = padding + CARD_CONTENT_PAD + idx * (cellW + 10);
 
       ctx.fillStyle = '#F8FAFC';
       drawRoundedRect(ctx, cx, cy, cellW, 100, 14);
       ctx.fill();
 
-      ctx.font = '36px system-ui';
+      ctx.font = '32px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText(g.icon, cx + cellW / 2, cy + 44);
 
@@ -483,7 +621,7 @@ const ReportPage: React.FC = () => {
       ctx.textAlign = 'left';
     });
 
-    return y + cardH + 25;
+    return y + cardH;
   };
 
   const drawFloorChanges = (
@@ -498,43 +636,54 @@ const ReportPage: React.FC = () => {
     data.improvedFloors.slice(0, 3).forEach(f => changes.push({ ...f, title: '提升', color: '#10B981' }));
     data.newFloors.slice(0, 2).forEach(f => changes.push({ ...f, title: '新增', color: '#FF6B35' }));
 
-    if (changes.length === 0) return y;
+    const hasData = changes.length > 0;
+    const count = hasData ? Math.min(changes.length, 6) : 1;
+    const cardH = calcCardHeight(30 + 10 + (hasData ? count * 58 : 80));
 
-    const cardH = 100 + Math.min(changes.length, 6) * 60;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '🏗️', '楼层变化情况', padding, startY);
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
+
+    cy = drawSectionTitle(ctx, '🏗️', '楼层变化情况', padding, cy);
     cy += 10;
 
-    changes.slice(0, 6).forEach((item, idx) => {
-      const ry = cy + idx * 58;
-
-      ctx.fillStyle = '#F8FAFC';
-      drawRoundedRect(ctx, padding + 30, ry, width - padding * 2 - 60, 50, 10);
-      ctx.fill();
-
-      ctx.fillStyle = item.color;
-      ctx.fillRect(padding + 30, ry, 5, 50);
-
-      ctx.font = 'bold 22px system-ui';
-      ctx.fillStyle = '#1E293B';
-      ctx.fillText(`${item.floor}楼`, padding + 50, ry + 32);
-
-      ctx.font = '18px system-ui';
-      ctx.fillStyle = '#64748B';
-      const gradeText = item.prevGrade !== 'none'
-        ? `${GRADE_LABELS[item.prevGrade]} → ${GRADE_LABELS[item.currGrade]}`
-        : `→ ${GRADE_LABELS[item.currGrade]}`;
-      ctx.fillText(gradeText, padding + 130, ry + 32);
-
-      const changeText = item.scoreChange > 0 ? `+${item.scoreChange}分` : `${item.scoreChange}分`;
-      ctx.font = 'bold 18px system-ui';
-      ctx.fillStyle = item.color;
-      ctx.textAlign = 'right';
-      ctx.fillText(changeText, width - padding - 50, ry + 32);
+    if (!hasData) {
+      ctx.font = '20px system-ui';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'center';
+      ctx.fillText('暂无楼层变化', width / 2, cy + 30);
       ctx.textAlign = 'left';
-    });
+    } else {
+      changes.slice(0, 6).forEach((item, idx) => {
+        const ry = cy + idx * 58;
 
-    return y + cardH + 25;
+        ctx.fillStyle = '#F8FAFC';
+        drawRoundedRect(ctx, padding + CARD_CONTENT_PAD, ry, width - padding * 2 - CARD_CONTENT_PAD * 2, 50, 10);
+        ctx.fill();
+
+        ctx.fillStyle = item.color;
+        ctx.fillRect(padding + CARD_CONTENT_PAD, ry, 5, 50);
+
+        ctx.font = 'bold 22px system-ui';
+        ctx.fillStyle = '#1E293B';
+        ctx.fillText(`${item.floor}楼`, padding + CARD_CONTENT_PAD + 20, ry + 32);
+
+        ctx.font = '18px system-ui';
+        ctx.fillStyle = '#64748B';
+        const gradeText = item.prevGrade !== 'none'
+          ? `${GRADE_LABELS[item.prevGrade]} → ${GRADE_LABELS[item.currGrade]}`
+          : `→ ${GRADE_LABELS[item.currGrade]}`;
+        ctx.fillText(gradeText, padding + CARD_CONTENT_PAD + 100, ry + 32);
+
+        const changeText = item.scoreChange > 0 ? `+${item.scoreChange}分` : `${item.scoreChange}分`;
+        ctx.font = 'bold 18px system-ui';
+        ctx.fillStyle = item.color;
+        ctx.textAlign = 'right';
+        ctx.fillText(changeText, width - padding - CARD_CONTENT_PAD, ry + 32);
+        ctx.textAlign = 'left';
+      });
+    }
+
+    return y + cardH;
   };
 
   const drawRankSection = (
@@ -544,17 +693,17 @@ const ReportPage: React.FC = () => {
     padding: number,
     y: number
   ): number => {
-    const topCount = data.topFloors.length;
-    const bottomCount = data.bottomFloors.length;
-    if (topCount === 0 && bottomCount === 0) return y;
+    const maxCount = Math.max(data.topFloors.length, data.bottomFloors.length, 1);
+    const listH = 30 + maxCount * 50;
+    const cardH = calcCardHeight(30 + 10 + listH);
 
-    const listH = Math.max(topCount, bottomCount, 1) * 50 + 50;
-    const cardH = listH + 80;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '🏅', '楼层排行', padding, startY);
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
+
+    cy = drawSectionTitle(ctx, '🏅', '楼层排行', padding, cy);
     cy += 10;
 
-    const halfW = (width - padding * 2 - 70) / 2;
+    const halfW = (width - padding * 2 - CARD_CONTENT_PAD * 2 - 10) / 2;
 
     const drawRankList = (
       list: typeof data.topFloors,
@@ -568,6 +717,15 @@ const ReportPage: React.FC = () => {
       ctx.fillText(title, x + halfW / 2, cy + 22);
       ctx.textAlign = 'left';
 
+      if (list.length === 0) {
+        ctx.font = '18px system-ui';
+        ctx.fillStyle = '#94A3B8';
+        ctx.textAlign = 'center';
+        ctx.fillText('暂无数据', x + halfW / 2, cy + 60);
+        ctx.textAlign = 'left';
+        return;
+      }
+
       list.forEach((item, idx) => {
         const ly = cy + 40 + idx * 50;
         const colors = [COLORS.rankGold, COLORS.rankSilver, COLORS.rankBronze];
@@ -575,39 +733,31 @@ const ReportPage: React.FC = () => {
 
         ctx.fillStyle = badgeColor;
         ctx.beginPath();
-        ctx.arc(x + 28, ly + 20, 18, 0, Math.PI * 2);
+        ctx.arc(x + 22, ly + 20, 16, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.font = 'bold 16px system-ui';
+        ctx.font = 'bold 14px system-ui';
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'center';
-        ctx.fillText(String(idx + 1), x + 28, ly + 26);
+        ctx.fillText(String(idx + 1), x + 22, ly + 25);
         ctx.textAlign = 'left';
 
         ctx.font = '20px system-ui';
         ctx.fillStyle = '#1E293B';
-        ctx.fillText(`${item.floor}楼`, x + 56, ly + 26);
+        ctx.fillText(`${item.floor}楼`, x + 50, ly + 26);
 
-        ctx.font = 'bold 20px system-ui';
+        ctx.font = 'bold 18px system-ui';
         ctx.fillStyle = item.grade === 'excellent' ? '#10B981' : item.grade === 'good' ? '#F59E0B' : '#EF4444';
         ctx.textAlign = 'right';
         ctx.fillText(`${item.avgScore}分`, x + halfW - 10, ly + 26);
         ctx.textAlign = 'left';
       });
-
-      if (list.length === 0) {
-        ctx.font = '18px system-ui';
-        ctx.fillStyle = '#94A3B8';
-        ctx.textAlign = 'center';
-        ctx.fillText('暂无数据', x + halfW / 2, cy + 70);
-        ctx.textAlign = 'left';
-      }
     };
 
-    drawRankList(data.topFloors, padding + 30, 'TOP 3 最佳', '#10B981');
-    drawRankList(data.bottomFloors, padding + 40 + halfW, '需关注 TOP3', '#EF4444');
+    drawRankList(data.topFloors, padding + CARD_CONTENT_PAD, 'TOP 3 最佳', '#10B981');
+    drawRankList(data.bottomFloors, padding + CARD_CONTENT_PAD + halfW + 10, '需关注 TOP3', '#EF4444');
 
-    return y + cardH + 25;
+    return y + cardH;
   };
 
   const drawBlindSpot = (
@@ -617,45 +767,45 @@ const ReportPage: React.FC = () => {
     padding: number,
     y: number
   ): number => {
-    const cardH = 150;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '👁️', '盲区提醒', padding, startY);
+    const cardH = calcCardHeight(30 + 20 + 100);
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
+
+    cy = drawSectionTitle(ctx, '👁️', '盲区提醒', padding, cy);
     cy += 20;
 
     ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
     ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
     ctx.lineWidth = 2;
-    drawRoundedRect(ctx, padding + 30, cy, width - padding * 2 - 60, 80, 12);
+    const boxW = width - padding * 2 - CARD_CONTENT_PAD * 2;
+    drawRoundedRect(ctx, padding + CARD_CONTENT_PAD, cy, boxW, 80, 12);
     ctx.fill();
     ctx.stroke();
 
     ctx.font = '20px system-ui';
     ctx.fillStyle = '#F59E0B';
-    ctx.fillText(`⚠️  检测到 ${data.blindSpotCount} 次盲区情况`, padding + 50, cy + 34);
+    ctx.fillText(`⚠️  检测到 ${data.blindSpotCount} 次盲区情况`, padding + CARD_CONTENT_PAD + 16, cy + 34);
 
     ctx.font = '18px system-ui';
     ctx.fillStyle = '#64748B';
     const floorsText = `涉及楼层: ${data.blindSpotFloors.map(f => `${f}楼`).join('、')}`;
-    const lines = wrapText(ctx, floorsText, width - padding * 2 - 100, 24);
+    const lines = wrapText(floorsText, boxW - 32, 24);
     lines.forEach((line, idx) => {
-      ctx.fillText(line, padding + 50, cy + 64 + idx * 24);
+      ctx.fillText(line, padding + CARD_CONTENT_PAD + 16, cy + 64 + idx * 24);
     });
 
-    return y + cardH + 25;
+    return y + cardH;
   };
 
-  const wrapText = (
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    maxWidth: number,
-    _lineHeight: number
-  ): string[] => {
+  const wrapText = (text: string, maxWidth: number, _lineHeight: number): string[] => {
     const lines: string[] = [];
     let currentLine = '';
+    const avgCharWidth = 11;
+
     for (const char of text) {
       const testLine = currentLine + char;
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxWidth && currentLine) {
+      const testWidth = testLine.length * avgCharWidth;
+      if (testWidth > maxWidth && currentLine) {
         lines.push(currentLine);
         currentLine = char;
       } else {
@@ -673,54 +823,65 @@ const ReportPage: React.FC = () => {
     padding: number,
     y: number
   ): number => {
-    if (data.contributors.length === 0) return y;
+    const hasData = data.contributors.length > 0;
+    const count = hasData ? data.contributors.length : 1;
+    const cardH = calcCardHeight(30 + 10 + (hasData ? count * 58 : 80));
 
-    const cardH = 100 + data.contributors.length * 60;
-    const startY = drawCardStart(ctx, width, padding, y, cardH);
-    let cy = drawSectionTitle(ctx, '👥', '贡献榜', padding, startY);
+    drawCardBg(ctx, width, padding, y, cardH);
+    let cy = y + CARD_CONTENT_PAD;
+
+    cy = drawSectionTitle(ctx, '👥', '贡献榜', padding, cy);
     cy += 10;
 
-    data.contributors.forEach((c, idx) => {
-      const cy2 = cy + idx * 58;
-
-      ctx.fillStyle = '#F8FAFC';
-      drawRoundedRect(ctx, padding + 30, cy2, width - padding * 2 - 60, 50, 10);
-      ctx.fill();
-
-      const gradient = ctx.createLinearGradient(padding + 45, 0, padding + 95, 0);
-      gradient.addColorStop(0, '#FF6B35');
-      gradient.addColorStop(1, '#FF8C5A');
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(padding + 58, cy2 + 25, 20, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.font = 'bold 18px system-ui';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      ctx.fillText(c.testerName.charAt(0), padding + 58, cy2 + 31);
-      ctx.textAlign = 'left';
-
+    if (!hasData) {
       ctx.font = '20px system-ui';
-      ctx.fillStyle = '#1E293B';
-      ctx.fillText(c.testerName, padding + 95, cy2 + 32);
-
-      ctx.font = 'bold 20px system-ui';
-      ctx.fillStyle = '#FF6B35';
-      ctx.textAlign = 'right';
-      ctx.fillText(`${c.testCount}次`, width - padding - 50, cy2 + 32);
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'center';
+      ctx.fillText('暂无贡献数据', width / 2, cy + 30);
       ctx.textAlign = 'left';
-    });
+    } else {
+      data.contributors.forEach((c, idx) => {
+        const cy2 = cy + idx * 58;
+        const boxW = width - padding * 2 - CARD_CONTENT_PAD * 2;
 
-    return y + cardH + 25;
+        ctx.fillStyle = '#F8FAFC';
+        drawRoundedRect(ctx, padding + CARD_CONTENT_PAD, cy2, boxW, 50, 10);
+        ctx.fill();
+
+        const gradient = ctx.createLinearGradient(padding + CARD_CONTENT_PAD + 10, 0, padding + CARD_CONTENT_PAD + 50, 0);
+        gradient.addColorStop(0, '#FF6B35');
+        gradient.addColorStop(1, '#FF8C5A');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(padding + CARD_CONTENT_PAD + 28, cy2 + 25, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = 'bold 18px system-ui';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText(c.testerName.charAt(0), padding + CARD_CONTENT_PAD + 28, cy2 + 31);
+        ctx.textAlign = 'left';
+
+        ctx.font = '20px system-ui';
+        ctx.fillStyle = '#1E293B';
+        ctx.fillText(c.testerName, padding + CARD_CONTENT_PAD + 60, cy2 + 32);
+
+        ctx.font = 'bold 20px system-ui';
+        ctx.fillStyle = '#FF6B35';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${c.testCount}次`, width - padding - CARD_CONTENT_PAD, cy2 + 32);
+        ctx.textAlign = 'left';
+      });
+    }
+
+    return y + cardH;
   };
 
   const drawFooter = (ctx: CanvasRenderingContext2D, width: number, y: number) => {
-    const footerY = y + 30;
     ctx.font = '16px system-ui';
     ctx.fillStyle = '#CBD5E1';
     ctx.textAlign = 'center';
-    ctx.fillText('—— 声控灯评测 · 让楼道更安全 ——', width / 2, footerY);
+    ctx.fillText('—— 声控灯评测 · 让楼道更安全 ——', width / 2, y);
     ctx.textAlign = 'left';
   };
 
@@ -837,7 +998,7 @@ const ReportPage: React.FC = () => {
                   <View key={item.date} className={styles.chartBar}>
                     <View
                       className={styles.barFill}
-                      style={{ height: `${item.avgScore > 0 ? Math.max(3, item.avgScore * 0.8) : 3}rpx` }}
+                      style={{ height: `${item.avgScore > 0 ? Math.max(8, item.avgScore * 0.8) : 8}rpx` }}
                       data-score={item.avgScore > 0 ? item.avgScore : ''}
                     />
                     <Text className={styles.barLabel}>{item.label}</Text>

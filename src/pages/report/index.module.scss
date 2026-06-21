@@ -565,10 +565,12 @@
 
 .previewCanvas {
   position: fixed;
-  left: -9999rpx;
-  top: -9999rpx;
-  width: 750rpx;
-  height: 2000rpx;
+  left: -9999px;
+  top: -9999px;
+  width: 750px;
+  height: 5000px;
+  pointer-events: none;
+  opacity: 0;
 }
 
 .savingOverlay {
