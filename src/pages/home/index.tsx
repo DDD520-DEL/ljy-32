@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, Button, ScrollView, Input } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
@@ -7,7 +7,7 @@ import RankCard from '../../components/RankCard';
 import type { RetestReminder, RetestCycle } from '../../types';
 import { RETEST_CYCLE_CONFIG } from '../../types';
 import { formatDate } from '../../utils/storage';
-import { setPendingRetest } from '../../utils/retestNavigate';
+import { setPendingRetest, markReminderHandled, getAllHandledReminderIds } from '../../utils/retestNavigate';
 
 const HomePage: React.FC = () => {
   const {
@@ -35,10 +35,16 @@ const HomePage: React.FC = () => {
   const [customDays, setCustomDays] = useState('');
   const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
 
+  const activeReminders = useMemo(() => {
+    const handledIds = getAllHandledReminderIds();
+    return retestReminders.filter(
+      r => !handledIds.has(r.id) && !dismissedReminders.has(r.id)
+    );
+  }, [retestReminders, dismissedReminders]);
+
   useDidShow(() => {
     console.log('[HomePage] did show');
     forceUpdate(prev => prev + 1);
-    const activeReminders = retestReminders.filter(r => !dismissedReminders.has(r.id));
     if (activeReminders.length > 0) {
       setShowRetestModal(true);
     }
@@ -222,6 +228,7 @@ const HomePage: React.FC = () => {
 
   const handleReminderClick = (reminder: RetestReminder) => {
     setShowRetestModal(false);
+    markReminderHandled(reminder.id);
     setCurrentBuildingId(reminder.buildingId);
     setPendingRetest({ buildingId: reminder.buildingId, floor: reminder.floor });
     Taro.switchTab({ url: '/pages/record/index' });
@@ -231,14 +238,14 @@ const HomePage: React.FC = () => {
     const newDismissed = new Set(dismissedReminders);
     newDismissed.add(reminderId);
     setDismissedReminders(newDismissed);
-    const remaining = retestReminders.filter(r => !newDismissed.has(r.id));
+    const remaining = activeReminders.filter(r => !newDismissed.has(r.id));
     if (remaining.length === 0) {
       setShowRetestModal(false);
     }
   };
 
   const handleCloseAllReminders = () => {
-    const allIds = new Set(retestReminders.map(r => r.id));
+    const allIds = new Set(activeReminders.map(r => r.id));
     setDismissedReminders(allIds);
     setShowRetestModal(false);
   };
@@ -337,7 +344,7 @@ const HomePage: React.FC = () => {
               <Text className={styles.closeBtn} onClick={handleCloseAllReminders}>×</Text>
             </View>
             <ScrollView className={styles.reminderList} scrollY>
-              {retestReminders.filter(r => !dismissedReminders.has(r.id)).map(reminder => (
+              {activeReminders.map(reminder => (
                 <View key={reminder.id} className={styles.reminderItem}>
                   <View className={styles.reminderContent} onClick={() => handleReminderClick(reminder)}>
                     <View className={styles.reminderHeader}>
