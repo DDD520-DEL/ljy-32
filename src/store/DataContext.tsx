@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus } from '../types';
-import { storage, calculateScore, generateId } from '../utils/storage';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle } from '../types';
+import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 
 interface DataContextType {
@@ -30,6 +30,9 @@ interface DataContextType {
   createOrUpdateRepairRecord: (record: Omit<RepairRecord, 'id' | 'statusUpdateTime'>) => void;
   markFloorComplaint: (buildingId: string, floor: number, issues: string) => void;
   updateRepairStatus: (id: string, status: RepairStatus, note?: string) => void;
+  updateBuildingRetestCycle: (buildingId: string, cycle: RetestCycle, customDays?: number) => void;
+  getRetestReminders: () => RetestReminder[];
+  getFloorLastTestTime: (buildingId: string, floor: number) => string | null;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -59,7 +62,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const newBuilding: Building = {
       ...building,
       id: generateId(),
-      createTime: new Date().toISOString()
+      createTime: new Date().toISOString(),
+      retestCycle: 'two_weeks'
     };
     const updated = storage.addBuilding(newBuilding);
     setBuildings(updated);
@@ -143,6 +147,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         grade = 'good';
       }
 
+      const latestRecord = data.records.reduce((latest, record) => {
+        return new Date(record.testTime) > new Date(latest.testTime) ? record : latest;
+      });
+
+      const lastTestTime = latestRecord.testTime;
+      const daysSinceLastTest = getDaysSinceDate(lastTestTime);
+      const isStale = isDataStale(lastTestTime, 30);
+
       const contributorMap = new Map<string, ContributorInfo>();
       data.records.forEach(r => {
         const testerKey = r.testerId || r.id;
@@ -175,7 +187,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         averageScore,
         testCount: data.records.length,
         grade,
-        contributors: Array.from(contributorMap.values())
+        contributors: Array.from(contributorMap.values()),
+        lastTestTime,
+        isStale,
+        daysSinceLastTest
       };
     });
 
@@ -303,6 +318,71 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setRepairRecords(updated);
   };
 
+  const updateBuildingRetestCycle = (buildingId: string, cycle: RetestCycle, customDays?: number) => {
+    const building = buildings.find(b => b.id === buildingId);
+    if (building) {
+      const updatedBuilding: Building = {
+        ...building,
+        retestCycle: cycle,
+        customRetestDays: customDays
+      };
+      const updated = storage.updateBuilding(updatedBuilding);
+      setBuildings(updated);
+    }
+  };
+
+  const getFloorLastTestTime = (buildingId: string, floor: number): string | null => {
+    const floorRecords = records.filter(
+      r => r.buildingId === buildingId && r.floor === floor
+    );
+    if (floorRecords.length === 0) return null;
+    
+    const latestRecord = floorRecords.reduce((latest, record) => {
+      return new Date(record.testTime) > new Date(latest.testTime) ? record : latest;
+    });
+    return latestRecord.testTime;
+  };
+
+  const getRetestReminders = (): RetestReminder[] => {
+    const reminders: RetestReminder[] = [];
+    
+    buildings.forEach(building => {
+      const buildingRecords = records.filter(r => r.buildingId === building.id);
+      if (buildingRecords.length === 0) return;
+
+      const floorMap = new Map<number, TestRecord[]>();
+      buildingRecords.forEach(record => {
+        if (!floorMap.has(record.floor)) {
+          floorMap.set(record.floor, []);
+        }
+        floorMap.get(record.floor)!.push(record);
+      });
+
+      floorMap.forEach((floorRecords, floor) => {
+        const latestRecord = floorRecords.reduce((latest, record) => {
+          return new Date(record.testTime) > new Date(latest.testTime) ? record : latest;
+        });
+
+        if (isRetestOverdue(latestRecord.testTime, building.retestCycle, building.customRetestDays)) {
+          const daysOverdue = getDaysOverdue(latestRecord.testTime, building.retestCycle, building.customRetestDays);
+          reminders.push({
+            id: `${building.id}-${floor}`,
+            buildingId: building.id,
+            buildingName: building.name,
+            floor,
+            lastTestTime: latestRecord.testTime,
+            retestDueDate: getRetestDueDate(latestRecord.testTime, building.retestCycle, building.customRetestDays),
+            daysOverdue,
+            retestCycle: building.retestCycle
+          });
+        }
+      });
+    });
+
+    reminders.sort((a, b) => b.daysOverdue - a.daysOverdue);
+    return reminders;
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -331,7 +411,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         getRepairRecordByFloor,
         createOrUpdateRepairRecord,
         markFloorComplaint,
-        updateRepairStatus
+        updateRepairStatus,
+        updateBuildingRetestCycle,
+        getRetestReminders,
+        getFloorLastTestTime
       }}
     >
       {children}

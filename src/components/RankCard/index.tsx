@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import styles from './index.module.scss';
 import ScoreBadge from '../ScoreBadge';
 import type { RankItem } from '../../types';
+import { formatDate } from '../../utils/storage';
 
 interface RankCardProps {
   item: RankItem;
@@ -18,7 +19,7 @@ const RankCard: React.FC<RankCardProps> = ({ item }) => {
   };
 
   return (
-    <View className={styles.card}>
+    <View className={classNames(styles.card, { [styles.stale]: item.isStale })}>
       <View className={classNames(styles.rankBadge, styles[getRankStyle()])}>
         <Text className={styles.rankText}>{item.rank}</Text>
       </View>
@@ -32,6 +33,16 @@ const RankCard: React.FC<RankCardProps> = ({ item }) => {
           </Text>
         </View>
         <Text className={styles.buildingName}>{item.buildingName}</Text>
+        <View className={styles.metaRow}>
+          <Text className={styles.lastTestTime}>
+            上次测试：{formatDate(item.lastTestTime)}
+          </Text>
+          {item.isStale && (
+            <View className={styles.staleBadge}>
+              <Text className={styles.staleText}>⚠️ 数据过期（{item.daysSinceLastTest}天）</Text>
+            </View>
+          )}
+        </View>
         {item.contributors.length > 1 && (
           <View className={styles.contributors}>
             {item.contributors.map(c => (

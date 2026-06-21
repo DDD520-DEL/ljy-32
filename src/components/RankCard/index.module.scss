@@ -10,9 +10,15 @@
   margin-bottom: $spacing-md;
   box-shadow: $shadow-card;
   transition: all $transition-base;
+  border: 2rpx solid transparent;
 
   &:active {
     transform: scale(0.98);
+  }
+
+  &.stale {
+    border-color: rgba($color-warning, 0.3);
+    background: rgba($color-warning, 0.03);
   }
 }
 
@@ -82,6 +88,30 @@
 .buildingName {
   font-size: $font-size-sm;
   color: $color-text-secondary;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.lastTestTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.staleBadge {
+  background: rgba($color-warning, 0.1);
+  padding: 2rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.staleText {
+  font-size: $font-size-xs;
+  color: $color-warning;
+  font-weight: $font-weight-medium;
 }
 
 .contributors {

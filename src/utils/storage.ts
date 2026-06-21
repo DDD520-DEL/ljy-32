@@ -1,5 +1,6 @@
 import Taro from '@tarojs/taro';
-import type { Building, TestRecord, RepairRecord, RepairStatus } from '../types';
+import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle } from '../types';
+import { RETEST_CYCLE_CONFIG } from '../types';
 
 const BUILDINGS_KEY = 'light_evaluator_buildings';
 const RECORDS_KEY = 'light_evaluator_records';
@@ -76,7 +77,8 @@ export const storage = {
       name,
       address,
       totalFloors,
-      createTime: new Date().toISOString()
+      createTime: new Date().toISOString(),
+      retestCycle: 'two_weeks'
     };
     buildings.push(newBuilding);
     this.saveBuildings(buildings);
@@ -332,4 +334,44 @@ export const formatDate = (dateStr: string): string => {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
+
+export const getRetestCycleDays = (cycle: RetestCycle, customDays?: number): number => {
+  if (cycle === 'custom' && customDays) {
+    return customDays;
+  }
+  return RETEST_CYCLE_CONFIG[cycle]?.days || 30;
+};
+
+export const getDaysSinceDate = (dateStr: string): number => {
+  const now = new Date();
+  const testDate = new Date(dateStr);
+  const diffTime = now.getTime() - testDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+export const isDataStale = (lastTestTime: string, staleDays: number = 30): boolean => {
+  return getDaysSinceDate(lastTestTime) > staleDays;
+};
+
+export const getRetestDueDate = (lastTestTime: string, cycle: RetestCycle, customDays?: number): string => {
+  const testDate = new Date(lastTestTime);
+  const cycleDays = getRetestCycleDays(cycle, customDays);
+  testDate.setDate(testDate.getDate() + cycleDays);
+  return testDate.toISOString();
+};
+
+export const isRetestOverdue = (lastTestTime: string, cycle: RetestCycle, customDays?: number): boolean => {
+  const dueDate = new Date(getRetestDueDate(lastTestTime, cycle, customDays));
+  const now = new Date();
+  return now > dueDate;
+};
+
+export const getDaysOverdue = (lastTestTime: string, cycle: RetestCycle, customDays?: number): number => {
+  const dueDate = new Date(getRetestDueDate(lastTestTime, cycle, customDays));
+  const now = new Date();
+  const diffTime = now.getTime() - dueDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return Math.max(0, diffDays);
 };

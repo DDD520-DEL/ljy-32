@@ -1,5 +1,15 @@
 export type SensitivityLevel = 'whisper' | 'normal' | 'loud' | 'shout';
 
+export type RetestCycle = 'one_week' | 'two_weeks' | 'one_month' | 'three_months' | 'custom';
+
+export const RETEST_CYCLE_CONFIG: Record<RetestCycle, { label: string; days: number }> = {
+  one_week: { label: '每周', days: 7 },
+  two_weeks: { label: '每两周', days: 14 },
+  one_month: { label: '每月', days: 30 },
+  three_months: { label: '每季度', days: 90 },
+  custom: { label: '自定义', days: -1 }
+};
+
 export type RepairStatus = 'pending' | 'dispatched' | 'repairing' | 'fixed';
 
 export interface RepairRecord {
@@ -39,6 +49,8 @@ export interface Building {
   totalFloors: number;
   address: string;
   createTime: string;
+  retestCycle: RetestCycle;
+  customRetestDays?: number;
 }
 
 export interface RankItem {
@@ -49,6 +61,9 @@ export interface RankItem {
   testCount: number;
   grade: 'excellent' | 'good' | 'poor';
   contributors: ContributorInfo[];
+  lastTestTime: string;
+  isStale: boolean;
+  daysSinceLastTest: number;
 }
 
 export interface ContributorInfo {
@@ -82,6 +97,17 @@ export interface CollaborationSession {
   buildingName: string;
   participants: NeighborUser[];
   createTime: string;
+}
+
+export interface RetestReminder {
+  id: string;
+  buildingId: string;
+  buildingName: string;
+  floor: number;
+  lastTestTime: string;
+  retestDueDate: string;
+  daysOverdue: number;
+  retestCycle: RetestCycle;
 }
 
 export const SENSITIVITY_CONFIG: Record<SensitivityLevel, { label: string; score: number; description: string }> = {

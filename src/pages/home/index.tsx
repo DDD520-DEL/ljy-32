@@ -1,9 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, Button, ScrollView } from '@tarojs/components';
+import { View, Text, Button, ScrollView, Input } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
 import RankCard from '../../components/RankCard';
+import type { RetestReminder, RetestCycle } from '../../types';
+import { RETEST_CYCLE_CONFIG } from '../../types';
+import { formatDate } from '../../utils/storage';
 
 const HomePage: React.FC = () => {
   const {
@@ -14,18 +17,30 @@ const HomePage: React.FC = () => {
     getRankList,
     setCurrentBuildingId,
     addBuilding,
-    updateBuilding
+    updateBuilding,
+    updateBuildingRetestCycle,
+    getRetestReminders
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
   const records = getRecordsByCurrentBuilding();
   const rankList = getRankList().slice(0, 3);
+  const retestReminders = getRetestReminders();
 
   const [, forceUpdate] = useState(0);
+  const [showRetestModal, setShowRetestModal] = useState(false);
+  const [showCycleSettingModal, setShowCycleSettingModal] = useState(false);
+  const [selectedCycle, setSelectedCycle] = useState<RetestCycle>('two_weeks');
+  const [customDays, setCustomDays] = useState('');
+  const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
 
   useDidShow(() => {
     console.log('[HomePage] did show');
     forceUpdate(prev => prev + 1);
+    const activeReminders = retestReminders.filter(r => !dismissedReminders.has(r.id));
+    if (activeReminders.length > 0) {
+      setShowRetestModal(true);
+    }
   });
 
   const stats = {
@@ -44,7 +59,7 @@ const HomePage: React.FC = () => {
 
   const handleManageBuilding = useCallback(() => {
     Taro.showActionSheet({
-      itemList: ['添加楼栋', '切换楼栋', '编辑楼栋信息'],
+      itemList: ['添加楼栋', '切换楼栋', '编辑楼栋信息', '设置复测周期'],
       success: (res) => {
         if (res.tapIndex === 0) {
           showAddBuildingModal();
@@ -56,6 +71,12 @@ const HomePage: React.FC = () => {
             return;
           }
           showEditBuildingModal();
+        } else if (res.tapIndex === 3) {
+          if (!currentBuildingId) {
+            Taro.showToast({ title: '请先选择楼栋', icon: 'none' });
+            return;
+          }
+          showCycleSettingModal();
         }
       }
     });
@@ -165,6 +186,63 @@ const HomePage: React.FC = () => {
     });
   };
 
+  const showCycleSettingModal = () => {
+    const building = getCurrentBuilding();
+    if (!building) return;
+    setSelectedCycle(building.retestCycle);
+    setCustomDays(building.customRetestDays ? String(building.customRetestDays) : '');
+    setShowCycleSettingModal(true);
+  };
+
+  const handleCycleSelect = (cycle: RetestCycle) => {
+    setSelectedCycle(cycle);
+    if (cycle !== 'custom') {
+      setCustomDays('');
+    }
+  };
+
+  const handleSaveCycle = () => {
+    if (!currentBuildingId) return;
+    
+    if (selectedCycle === 'custom') {
+      const days = parseInt(customDays, 10);
+      if (isNaN(days) || days < 1 || days > 365) {
+        Taro.showToast({ title: '请输入有效的天数（1-365）', icon: 'none' });
+        return;
+      }
+      updateBuildingRetestCycle(currentBuildingId, selectedCycle, days);
+    } else {
+      updateBuildingRetestCycle(currentBuildingId, selectedCycle);
+    }
+    Taro.showToast({ title: '设置成功', icon: 'success' });
+    setShowCycleSettingModal(false);
+    forceUpdate(prev => prev + 1);
+  };
+
+  const handleReminderClick = (reminder: RetestReminder) => {
+    setShowRetestModal(false);
+    setCurrentBuildingId(reminder.buildingId);
+    Taro.navigateTo({
+      url: `/pages/record/index?floor=${reminder.floor}&buildingId=${reminder.buildingId}`
+    });
+  };
+
+  const handleDismissReminder = (reminderId: string) => {
+    const newDismissed = new Set(dismissedReminders);
+    newDismissed.add(reminderId);
+    setDismissedReminders(newDismissed);
+    const remaining = retestReminders.filter(r => !newDismissed.has(r.id));
+    if (remaining.length === 0) {
+      setShowRetestModal(false);
+    }
+  };
+
+  const handleCloseAllReminders = () => {
+    const allIds = new Set(retestReminders.map(r => r.id));
+    setDismissedReminders(allIds);
+    setShowRetestModal(false);
+  };
+
   const handleViewAllRank = () => {
     Taro.switchTab({ url: '/pages/rank/index' });
   };
@@ -189,6 +267,10 @@ const HomePage: React.FC = () => {
             <Text className={styles.buildingName}>{currentBuilding.name}</Text>
             <Text className={styles.buildingInfo}>
               {currentBuilding.address} · 共{currentBuilding.totalFloors}层
+            </Text>
+            <Text className={styles.cycleInfo}>
+              复测周期：{RETEST_CYCLE_CONFIG[currentBuilding.retestCycle].label}
+              {currentBuilding.retestCycle === 'custom' && currentBuilding.customRetestDays && `（${currentBuilding.customRetestDays}天）`}
             </Text>
           </>
         ) : (
@@ -246,6 +328,82 @@ const HomePage: React.FC = () => {
           </View>
         )}
       </View>
+
+      {showRetestModal && (
+        <View className={styles.modalOverlay}>
+          <View className={styles.retestModal}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>🔔 复测提醒</Text>
+              <Text className={styles.closeBtn} onClick={handleCloseAllReminders}>×</Text>
+            </View>
+            <ScrollView className={styles.reminderList} scrollY>
+              {retestReminders.filter(r => !dismissedReminders.has(r.id)).map(reminder => (
+                <View key={reminder.id} className={styles.reminderItem}>
+                  <View className={styles.reminderContent} onClick={() => handleReminderClick(reminder)}>
+                    <View className={styles.reminderHeader}>
+                      <Text className={styles.reminderBuilding}>{reminder.buildingName} {reminder.floor}楼</Text>
+                      {reminder.daysOverdue > 0 && (
+                        <View className={styles.overdueBadge}>
+                          <Text className={styles.overdueText}>逾期{reminder.daysOverdue}天</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text className={styles.reminderInfo}>上次测试：{formatDate(reminder.lastTestTime)}</Text>
+                    <Text className={styles.reminderAction}>点击前往测试 →</Text>
+                  </View>
+                  <Text className={styles.dismissBtn} onClick={() => handleDismissReminder(reminder.id)}>忽略</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {showCycleSettingModal && (
+        <View className={styles.modalOverlay} onClick={() => setShowCycleSettingModal(false)}>
+          <View className={styles.cycleModal} onClick={e => e.stopPropagation()}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>设置复测周期</Text>
+              <Text className={styles.closeBtn} onClick={() => setShowCycleSettingModal(false)}>×</Text>
+            </View>
+            <View className={styles.cycleOptions}>
+              {(Object.keys(RETEST_CYCLE_CONFIG) as RetestCycle[]).map(cycle => (
+                <View
+                  key={cycle}
+                  className={`${styles.cycleOption} ${selectedCycle === cycle ? styles.active : ''}`}
+                  onClick={() => handleCycleSelect(cycle)}
+                >
+                  <Text className={styles.cycleLabel}>{RETEST_CYCLE_CONFIG[cycle].label}</Text>
+                  {cycle !== 'custom' && (
+                    <Text className={styles.cycleDesc}>{RETEST_CYCLE_CONFIG[cycle].days}天</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+            {selectedCycle === 'custom' && (
+              <View className={styles.customInput}>
+                <Text className={styles.customLabel}>自定义天数：</Text>
+                <Input
+                  className={styles.customInputField}
+                  type="number"
+                  placeholder="请输入天数"
+                  value={customDays}
+                  onInput={e => setCustomDays(e.detail.value)}
+                />
+                <Text className={styles.customUnit}>天</Text>
+              </View>
+            )}
+            <View className={styles.modalFooter}>
+              <Button className={styles.cancelBtn} onClick={() => setShowCycleSettingModal(false)}>
+                取消
+              </Button>
+              <Button className={styles.confirmBtn} onClick={handleSaveCycle}>
+                确定
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };

@@ -22,6 +22,7 @@ const RankPage: React.FC = () => {
   const repairRecords = currentBuildingId ? getRepairRecordsByBuilding(currentBuildingId) : [];
 
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [staleFilter, setStaleFilter] = useState<'all' | 'stale' | 'fresh'>('all');
   const [, forceUpdate] = useState(0);
 
   useDidShow(() => {
@@ -31,11 +32,18 @@ const RankPage: React.FC = () => {
 
   const poorFloors = rankList.filter(r => r.grade === 'poor').length;
   const testedFloors = rankList.length;
+  const staleFloors = rankList.filter(r => r.isStale).length;
   const avgScore = rankList.length > 0
     ? Math.round(rankList.reduce((sum, r) => sum + r.averageScore, 0) / rankList.length)
     : 0;
 
-  const sortedRankList = [...rankList].sort((a, b) => {
+  const filteredRankList = rankList.filter(item => {
+    if (staleFilter === 'stale') return item.isStale;
+    if (staleFilter === 'fresh') return !item.isStale;
+    return true;
+  });
+
+  const sortedRankList = [...filteredRankList].sort((a, b) => {
     return sortOrder === 'desc'
       ? b.averageScore - a.averageScore
       : a.averageScore - b.averageScore;
@@ -96,6 +104,10 @@ const RankPage: React.FC = () => {
             <Text className={styles.value}>{poorFloors}</Text>
             <Text className={styles.label}>待更换</Text>
           </View>
+          <View className={classNames(styles.summaryItem, styles.staleItem)}>
+            <Text className={styles.value}>{staleFloors}</Text>
+            <Text className={styles.label}>数据过期</Text>
+          </View>
         </View>
       </View>
 
@@ -111,6 +123,27 @@ const RankPage: React.FC = () => {
           onClick={() => setSortOrder('asc')}
         >
           分数从低到高
+        </Button>
+      </View>
+
+      <View className={styles.filterBar}>
+        <Button
+          className={classNames(styles.filterBtn, styles.small, { [styles.active]: staleFilter === 'all' })}
+          onClick={() => setStaleFilter('all')}
+        >
+          全部
+        </Button>
+        <Button
+          className={classNames(styles.filterBtn, styles.small, styles.staleFilter, { [styles.active]: staleFilter === 'stale' })}
+          onClick={() => setStaleFilter('stale')}
+        >
+          仅看过期 ({staleFloors})
+        </Button>
+        <Button
+          className={classNames(styles.filterBtn, styles.small, styles.freshFilter, { [styles.active]: staleFilter === 'fresh' })}
+          onClick={() => setStaleFilter('fresh')}
+        >
+          仅看最新
         </Button>
       </View>
 

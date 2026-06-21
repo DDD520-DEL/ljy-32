@@ -160,3 +160,226 @@
     color: $color-text-tertiary;
   }
 }
+
+.cycleInfo {
+  font-size: $font-size-xs;
+  color: rgba($color-text-white, 0.75);
+  margin-top: $spacing-xs;
+  background: rgba($color-text-white, 0.15);
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-md;
+  display: inline-block;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-lg;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-border;
+}
+
+.modalTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.closeBtn {
+  font-size: $font-size-xxl;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+  line-height: 1;
+}
+
+.modalFooter {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-xl;
+}
+
+.cancelBtn, .confirmBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+}
+
+.cancelBtn {
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  border: 2rpx solid $color-border;
+}
+
+.confirmBtn {
+  background: $color-primary;
+  color: $color-text-white;
+}
+
+.retestModal {
+  width: 100%;
+  max-width: 680rpx;
+  max-height: 80vh;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  display: flex;
+  flex-direction: column;
+}
+
+.reminderList {
+  flex: 1;
+  max-height: 60vh;
+}
+
+.reminderItem {
+  display: flex;
+  align-items: stretch;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border-left: 6rpx solid $color-warning;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.reminderContent {
+  flex: 1;
+}
+
+.reminderHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.reminderBuilding {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.overdueBadge {
+  background: rgba($color-error, 0.1);
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+}
+
+.overdueText {
+  font-size: $font-size-xs;
+  color: $color-error;
+  font-weight: $font-weight-semibold;
+}
+
+.reminderInfo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+}
+
+.reminderAction {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.dismissBtn {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  padding: $spacing-sm;
+  align-self: flex-start;
+}
+
+.cycleModal {
+  width: 100%;
+  max-width: 680rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+}
+
+.cycleOptions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.cycleOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border: 2rpx solid $color-border;
+  transition: all $transition-base;
+
+  &.active {
+    border-color: $color-primary;
+    background: rgba($color-primary, 0.05);
+  }
+}
+
+.cycleLabel {
+  font-size: $font-size-lg;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.cycleDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.customInput {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  padding: $spacing-lg;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+}
+
+.customLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.customInputField {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.customUnit {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}

@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, Button, ScrollView, Input, Switch, Image } from '@tarojs/components';
-import Taro, { useDidShow } from '@tarojs/taro';
+import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
@@ -15,9 +15,11 @@ const RecordPage: React.FC = () => {
     getCurrentBuilding,
     getRecordsByCurrentBuilding,
     addRecord,
-    deleteRecord
+    deleteRecord,
+    setCurrentBuildingId
   } = useData();
 
+  const router = useRouter();
   const currentBuilding = getCurrentBuilding();
   const allRecords = getRecordsByCurrentBuilding();
 
@@ -33,6 +35,22 @@ const RecordPage: React.FC = () => {
     blindSpotDescription: '',
     photos: [] as string[]
   });
+
+  useEffect(() => {
+    const floor = router.params.floor;
+    const buildingId = router.params.buildingId;
+    
+    if (buildingId && buildingId !== currentBuildingId) {
+      setCurrentBuildingId(buildingId);
+    }
+    
+    if (floor) {
+      setFormData(prev => ({ ...prev, floor }));
+      setTimeout(() => {
+        setShowModal(true);
+      }, 300);
+    }
+  }, [router.params, currentBuildingId, setCurrentBuildingId]);
 
   useDidShow(() => {
     console.log('[RecordPage] did show');

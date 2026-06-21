@@ -8,14 +8,16 @@ export const mockBuildings: Building[] = [
     name: '1号楼',
     totalFloors: 18,
     address: '阳光小区',
-    createTime: '2024-01-15T10:00:00.000Z'
+    createTime: '2024-01-15T10:00:00.000Z',
+    retestCycle: 'two_weeks'
   },
   {
     id: 'building_002',
     name: '2号楼',
     totalFloors: 24,
     address: '阳光小区',
-    createTime: '2024-01-16T08:30:00.000Z'
+    createTime: '2024-01-16T08:30:00.000Z',
+    retestCycle: 'one_month'
   }
 ];
 
@@ -48,7 +50,10 @@ export const generateMockRecords = (buildings: Building[]): TestRecord[] => {
           const { totalScore, grade } = calculateScore(sensitivityScore, duration, hasBlindSpot);
 
           const date = new Date();
-          date.setDate(date.getDate() - Math.floor(Math.random() * 7));
+          const daysAgo = Math.random() > 0.3 
+            ? Math.floor(Math.random() * 7) 
+            : Math.floor(Math.random() * 30) + 35;
+          date.setDate(date.getDate() - daysAgo);
           date.setHours(Math.floor(Math.random() * 12) + 18);
 
           records.push({
