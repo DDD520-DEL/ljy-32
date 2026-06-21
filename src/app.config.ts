@@ -3,6 +3,7 @@ export default defineAppConfig({
     'pages/home/index',
     'pages/record/index',
     'pages/rank/index',
+    'pages/collaborate/index',
     'pages/share/index',
     'pages/detail/index'
   ],
@@ -30,6 +31,10 @@ export default defineAppConfig({
       {
         pagePath: 'pages/rank/index',
         text: '排行榜'
+      },
+      {
+        pagePath: 'pages/collaborate/index',
+        text: '邻里协作'
       },
       {
         pagePath: 'pages/share/index',

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useDidShow, useDidHide } from '@tarojs/taro';
 import { DataProvider } from './store/DataContext';
 import { storage } from './utils/storage';
+import { neighborStorage } from './utils/invitation';
 import { mockBuildings, generateMockRecords } from './data/mockData';
 import './app.scss';
 
@@ -15,6 +16,8 @@ function App(props) {
       storage.saveRecords(mockRecords);
       storage.saveCurrentBuildingId(mockBuildings[0].id);
     }
+
+    neighborStorage.ensureCurrentUser();
   }, []);
 
   useDidShow(() => {

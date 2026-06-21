@@ -13,6 +13,8 @@ export interface TestRecord {
   testTime: string;
   totalScore: number;
   grade: 'excellent' | 'good' | 'poor';
+  testerId?: string;
+  testerName?: string;
 }
 
 export interface Building {
@@ -30,6 +32,39 @@ export interface RankItem {
   averageScore: number;
   testCount: number;
   grade: 'excellent' | 'good' | 'poor';
+  contributors: ContributorInfo[];
+}
+
+export interface ContributorInfo {
+  testerId: string;
+  testerName: string;
+  score: number;
+  testTime: string;
+  grade: 'excellent' | 'good' | 'poor';
+}
+
+export interface NeighborUser {
+  id: string;
+  name: string;
+  avatar?: string;
+  joinTime: string;
+}
+
+export interface InvitationCode {
+  code: string;
+  buildingId: string;
+  buildingName: string;
+  address: string;
+  inviterName: string;
+  createTime: string;
+  expireTime: string;
+}
+
+export interface CollaborationSession {
+  buildingId: string;
+  buildingName: string;
+  participants: NeighborUser[];
+  createTime: string;
 }
 
 export const SENSITIVITY_CONFIG: Record<SensitivityLevel, { label: string; score: number; description: string }> = {

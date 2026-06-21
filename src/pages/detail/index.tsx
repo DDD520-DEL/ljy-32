@@ -61,6 +61,38 @@ const DetailPage: React.FC = () => {
     };
   }, [floorRecords]);
 
+  const testerStats = useMemo(() => {
+    const testerMap = new Map<string, {
+      testerId: string;
+      testerName: string;
+      records: typeof floorRecords;
+      avgScore: number;
+      bestScore: number;
+    }>();
+
+    floorRecords.forEach(record => {
+      const key = record.testerId || record.id;
+      if (!testerMap.has(key)) {
+        testerMap.set(key, {
+          testerId: record.testerId || '',
+          testerName: record.testerName || '匿名',
+          records: [],
+          avgScore: 0,
+          bestScore: 0
+        });
+      }
+      testerMap.get(key)!.records.push(record);
+    });
+
+    testerMap.forEach((stats) => {
+      const scores = stats.records.map(r => r.totalScore);
+      stats.avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      stats.bestScore = Math.max(...scores);
+    });
+
+    return Array.from(testerMap.values()).sort((a, b) => b.avgScore - a.avgScore);
+  }, [floorRecords]);
+
   const getSensitivityLabel = (score: number): string => {
     if (score >= 85) return '轻声';
     if (score >= 60) return '正常';
@@ -172,12 +204,19 @@ const DetailPage: React.FC = () => {
                 <Text className={styles.statValue}>{currentRank?.rank || '-'}</Text>
                 <Text className={styles.statLabel}>当前排名</Text>
               </View>
+              <View className={styles.statItem}>
+                <Text className={styles.statValue}>{testerStats.length}</Text>
+                <Text className={styles.statLabel}>测试人数</Text>
+              </View>
             </View>
 
             <View className={styles.avgScoreSection}>
               <Text className={styles.avgScoreLabel}>综合评分</Text>
               <Text className={styles.avgScoreValue}>{avgStats.avgScore}</Text>
               <Text className={styles.avgGrade}>{GRADE_CONFIG[avgStats.grade].label}</Text>
+              {testerStats.length > 1 && (
+                <Text className={styles.avgHint}>（{testerStats.length}人平均值）</Text>
+              )}
             </View>
           </>
         ) : null}
@@ -212,8 +251,74 @@ const DetailPage: React.FC = () => {
         </View>
       ) : null}
 
+      {testerStats.length > 1 && (
+        <View className={styles.section}>
+          <Text className={styles.sectionTitle}>👥 各邻居贡献</Text>
+          <View className={styles.contributionList}>
+            {testerStats.map((tester, index) => {
+              const testerGrade: 'excellent' | 'good' | 'poor' = tester.avgScore >= 80 ? 'excellent' : tester.avgScore >= 50 ? 'good' : 'poor';
+
+              return (
+                <View key={tester.testerId || index} className={styles.contributionCard}>
+                  <View className={styles.contributionHeader}>
+                    <View className={styles.testerInfo}>
+                      <View className={styles.testerAvatar}>
+                        <Text className={styles.testerAvatarText}>{tester.testerName.charAt(0)}</Text>
+                      </View>
+                      <View className={styles.testerDetail}>
+                        <Text className={styles.testerName}>{tester.testerName}</Text>
+                        <Text className={styles.testerRecordCount}>{tester.records.length}次测试</Text>
+                      </View>
+                    </View>
+                    <View className={styles.testerScoreArea}>
+                      <Text className={classNames(styles.testerAvgScore, styles[testerGrade])}>
+                        均分{tester.avgScore}
+                      </Text>
+                      <Text className={styles.testerBestScore}>
+                        最高{tester.bestScore}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className={styles.testerRecords}>
+                    {tester.records.map(record => {
+                      const sensitivityInfo = SENSITIVITY_CONFIG[record.sensitivityLevel];
+                      const durationStatus = getDurationStatus(record.duration);
+
+                      return (
+                        <View key={record.id} className={styles.testerRecordItem}>
+                          <View className={styles.testerRecordHeader}>
+                            <Text className={styles.testerRecordTime}>{formatDate(record.testTime)}</Text>
+                            <ScoreBadge score={record.totalScore} grade={record.grade} size="small" />
+                          </View>
+                          <View className={styles.testerRecordDetails}>
+                            <Text className={styles.testerRecordDetail}>
+                              灵敏度：{sensitivityInfo.label}
+                            </Text>
+                            <Text className={styles.testerRecordDetail}>
+                              时长：{record.duration}秒（{durationStatus.label}）
+                            </Text>
+                            {record.hasBlindSpot && record.blindSpotDescription && (
+                              <Text className={styles.testerRecordBlind}>
+                                盲区：{record.blindSpotDescription}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
       <View className={styles.section}>
-        <Text className={styles.sectionTitle}>📝 历史测试记录</Text>
+        <Text className={styles.sectionTitle}>
+          {testerStats.length > 1 ? '📝 全部测试记录' : '📝 历史测试记录'}
+        </Text>
         {floorRecords.length > 0 ? (
           <View className={styles.recordsList}>
             {floorRecords.map(record => {
@@ -223,7 +328,14 @@ const DetailPage: React.FC = () => {
               return (
                 <View key={record.id} className={styles.recordCard}>
                   <View className={styles.recordHeader}>
-                    <Text className={styles.recordTime}>{formatDate(record.testTime)}</Text>
+                    <View className={styles.recordHeaderLeft}>
+                      <Text className={styles.recordTime}>{formatDate(record.testTime)}</Text>
+                      {record.testerName && testerStats.length > 1 && (
+                        <View className={styles.testerTag}>
+                          <Text className={styles.testerTagText}>{record.testerName}</Text>
+                        </View>
+                      )}
+                    </View>
                     <ScoreBadge score={record.totalScore} grade={record.grade} size="small" />
                   </View>
 

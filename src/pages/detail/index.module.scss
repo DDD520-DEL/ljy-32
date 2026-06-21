@@ -113,6 +113,134 @@
   }
 }
 
+.contributionList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.contributionCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.contributionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.testerInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.testerAvatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-info 0%, #1DA1A1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .testerAvatarText {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+  }
+}
+
+.testerDetail {
+  .testerName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    display: block;
+    margin-bottom: 2rpx;
+  }
+
+  .testerRecordCount {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.testerScoreArea {
+  text-align: right;
+
+  .testerAvgScore {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    display: block;
+    margin-bottom: 2rpx;
+
+    &.excellent {
+      color: $color-success;
+    }
+
+    &.good {
+      color: $color-warning;
+    }
+
+    &.poor {
+      color: $color-error;
+    }
+  }
+
+  .testerBestScore {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.testerRecords {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.testerRecordItem {
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.testerRecordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.testerRecordTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.testerRecordDetails {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.testerRecordDetail {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.testerRecordBlind {
+  font-size: $font-size-sm;
+  color: $color-error;
+}
+
 .recordsList {
   margin-top: $spacing-md;
 }
@@ -134,9 +262,27 @@
   border-bottom: 1rpx solid $color-divider;
 }
 
+.recordHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
 .recordTime {
   font-size: $font-size-sm;
   color: $color-text-tertiary;
+}
+
+.testerTag {
+  background: rgba($color-info, 0.1);
+  border-radius: $radius-xs;
+  padding: 2rpx 12rpx;
+
+  .testerTagText {
+    font-size: $font-size-xs;
+    color: $color-info;
+    font-weight: $font-weight-medium;
+  }
 }
 
 .recordContent {
@@ -229,12 +375,14 @@
   background: rgba(255, 255, 255, 0.15);
   border-radius: $radius-lg;
   margin-top: $spacing-md;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
 }
 
 .avgScoreLabel {
   font-size: $font-size-sm;
   color: rgba($color-text-white, 0.85);
-  margin-right: $spacing-md;
+  margin-right: $spacing-sm;
 }
 
 .avgScoreValue {
@@ -249,4 +397,10 @@
   color: $color-text-white;
   margin-left: $spacing-sm;
   opacity: 0.9;
+}
+
+.avgHint {
+  font-size: $font-size-xs;
+  color: rgba($color-text-white, 0.7);
+  margin-left: $spacing-xs;
 }

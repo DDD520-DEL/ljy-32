@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem } from '../types';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession } from '../types';
 import { storage, calculateScore, generateId } from '../utils/storage';
+import { invitation, neighborStorage } from '../utils/invitation';
 
 interface DataContextType {
   buildings: Building[];
   records: TestRecord[];
   currentBuildingId: string;
+  currentUser: NeighborUser | null;
+  collaborations: CollaborationSession[];
   setCurrentBuildingId: (id: string) => void;
   addBuilding: (building: Omit<Building, 'id' | 'createTime'>) => void;
   updateBuilding: (building: Building) => void;
@@ -16,6 +19,11 @@ interface DataContextType {
   getCurrentBuilding: () => Building | undefined;
   getRecordsByCurrentBuilding: () => TestRecord[];
   getRecordsByBuilding: (buildingId: string) => TestRecord[];
+  generateInvitation: () => InvitationCode | null;
+  joinByCode: (code: string) => { success: boolean; reason?: string; buildingId?: string };
+  setCurrentUserName: (name: string) => void;
+  getParticipants: (buildingId: string) => NeighborUser[];
+  getRecordsByFloor: (buildingId: string, floor: number) => TestRecord[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -24,11 +32,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [records, setRecords] = useState<TestRecord[]>([]);
   const [currentBuildingId, setCurrentBuildingId] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState<NeighborUser | null>(null);
+  const [collaborations, setCollaborations] = useState<CollaborationSession[]>([]);
 
   useEffect(() => {
     setBuildings(storage.getBuildings());
     setRecords(storage.getRecords());
     setCurrentBuildingId(storage.getCurrentBuildingId());
+    setCurrentUser(neighborStorage.getCurrentUser());
+    setCollaborations(neighborStorage.getCollaborations());
   }, []);
 
   useEffect(() => {
@@ -68,12 +80,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       record.duration,
       record.hasBlindSpot
     );
+
+    const user = neighborStorage.ensureCurrentUser();
+
     const newRecord: TestRecord = {
       ...record,
       id: generateId(),
       totalScore,
       grade,
-      testTime: new Date().toISOString()
+      testTime: new Date().toISOString(),
+      testerId: record.testerId || user.id,
+      testerName: record.testerName || user.name
     };
     const updated = storage.addRecord(newRecord);
     setRecords(updated);
@@ -91,37 +108,66 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (buildingRecords.length === 0) return [];
 
-    const floorMap = new Map<string, { scores: number[]; buildingName: string; floor: number }>();
+    const floorMap = new Map<string, { records: TestRecord[]; buildingName: string; floor: number }>();
 
     buildingRecords.forEach(record => {
       const key = `${record.buildingId}-${record.floor}`;
       if (!floorMap.has(key)) {
         floorMap.set(key, {
-          scores: [],
+          records: [],
           buildingName: record.buildingName,
           floor: record.floor
         });
       }
-      floorMap.get(key)!.scores.push(record.totalScore);
+      floorMap.get(key)!.records.push(record);
     });
 
     const rankList: RankItem[] = Array.from(floorMap.entries()).map(([, data]) => {
+      const scores = data.records.map(r => r.totalScore);
       const averageScore = Math.round(
-        data.scores.reduce((a, b) => a + b, 0) / data.scores.length
+        scores.reduce((a, b) => a + b, 0) / scores.length
       );
+
       let grade: 'excellent' | 'good' | 'poor' = 'poor';
       if (averageScore >= 80) {
         grade = 'excellent';
       } else if (averageScore >= 50) {
         grade = 'good';
       }
+
+      const contributorMap = new Map<string, ContributorInfo>();
+      data.records.forEach(r => {
+        const testerKey = r.testerId || r.id;
+        if (!contributorMap.has(testerKey)) {
+          contributorMap.set(testerKey, {
+            testerId: r.testerId || '',
+            testerName: r.testerName || '匿名',
+            score: r.totalScore,
+            testTime: r.testTime,
+            grade: r.grade
+          });
+        } else {
+          const existing = contributorMap.get(testerKey)!;
+          if (new Date(r.testTime) > new Date(existing.testTime)) {
+            contributorMap.set(testerKey, {
+              testerId: r.testerId || '',
+              testerName: r.testerName || '匿名',
+              score: r.totalScore,
+              testTime: r.testTime,
+              grade: r.grade
+            });
+          }
+        }
+      });
+
       return {
         rank: 0,
         floor: data.floor,
         buildingName: data.buildingName,
         averageScore,
-        testCount: data.scores.length,
-        grade
+        testCount: data.records.length,
+        grade,
+        contributors: Array.from(contributorMap.values())
       };
     });
 
@@ -147,12 +193,73 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return records.filter(r => r.buildingId === buildingId);
   };
 
+  const getRecordsByFloor = (buildingId: string, floor: number): TestRecord[] => {
+    return records.filter(r => r.buildingId === buildingId && r.floor === floor);
+  };
+
+  const generateInvitation = (): InvitationCode | null => {
+    const building = getCurrentBuilding();
+    if (!building) return null;
+
+    const user = neighborStorage.ensureCurrentUser();
+    neighborStorage.joinCollaboration(building.id, building.name, user);
+
+    const inv = invitation.generateCode(
+      building.id,
+      building.name,
+      building.address,
+      user.name
+    );
+
+    setCollaborations(neighborStorage.getCollaborations());
+    return inv;
+  };
+
+  const joinByCode = (code: string): { success: boolean; reason?: string; buildingId?: string } => {
+    const result = invitation.isCodeValid(code);
+    if (!result.valid) {
+      return { success: false, reason: result.reason };
+    }
+
+    const invData = result.invitation!;
+    const user = neighborStorage.ensureCurrentUser();
+
+    let building = buildings.find(b => b.id === invData.buildingId);
+    if (!building) {
+      addBuilding({
+        name: invData.buildingName,
+        address: invData.address,
+        totalFloors: 18
+      });
+      building = storage.getBuildings().find(b => b.name === invData.buildingName && b.address === invData.address);
+    }
+
+    if (building) {
+      neighborStorage.joinCollaboration(building.id, building.name, user);
+      setCurrentBuildingId(building.id);
+      setCollaborations(neighborStorage.getCollaborations());
+    }
+
+    return { success: true, buildingId: building?.id };
+  };
+
+  const setCurrentUserName = (name: string) => {
+    const user = neighborStorage.updateUserName(name);
+    setCurrentUser(user);
+  };
+
+  const getParticipants = (buildingId: string): NeighborUser[] => {
+    return neighborStorage.getParticipantsByBuilding(buildingId);
+  };
+
   return (
     <DataContext.Provider
       value={{
         buildings,
         records,
         currentBuildingId,
+        currentUser,
+        collaborations,
         setCurrentBuildingId,
         addBuilding,
         updateBuilding,
@@ -162,7 +269,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         getRankList,
         getCurrentBuilding,
         getRecordsByCurrentBuilding,
-        getRecordsByBuilding
+        getRecordsByBuilding,
+        generateInvitation,
+        joinByCode,
+        setCurrentUserName,
+        getParticipants,
+        getRecordsByFloor
       }}
     >
       {children}

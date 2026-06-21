@@ -19,6 +19,12 @@ export const mockBuildings: Building[] = [
   }
 ];
 
+const mockTesters = [
+  { id: 'tester_001', name: '邻居小明' },
+  { id: 'tester_002', name: '邻居阿姨' },
+  { id: 'tester_003', name: '邻居老王' }
+];
+
 const sensitivityLevels: Array<'whisper' | 'normal' | 'loud' | 'shout'> = ['whisper', 'normal', 'loud', 'shout'];
 
 export const generateMockRecords = (buildings: Building[]): TestRecord[] => {
@@ -26,36 +32,43 @@ export const generateMockRecords = (buildings: Building[]): TestRecord[] => {
 
   buildings.forEach(building => {
     for (let floor = 1; floor <= Math.min(building.totalFloors, 10); floor++) {
-      const testCount = Math.floor(Math.random() * 3) + 1;
+      const testerCount = Math.random() > 0.5 ? 2 : 1;
+      const selectedTesters = mockTesters.slice(0, testerCount);
 
-      for (let i = 0; i < testCount; i++) {
-        const levelIndex = Math.floor(Math.random() * sensitivityLevels.length);
-        const sensitivityLevel = sensitivityLevels[levelIndex];
-        const sensitivityScore = SENSITIVITY_CONFIG[sensitivityLevel].score;
-        const duration = Math.floor(Math.random() * 90) + 10;
-        const hasBlindSpot = Math.random() > 0.6;
+      selectedTesters.forEach(tester => {
+        const testCount = Math.floor(Math.random() * 2) + 1;
 
-        const { totalScore, grade } = calculateScore(sensitivityScore, duration, hasBlindSpot);
+        for (let i = 0; i < testCount; i++) {
+          const levelIndex = Math.floor(Math.random() * sensitivityLevels.length);
+          const sensitivityLevel = sensitivityLevels[levelIndex];
+          const sensitivityScore = SENSITIVITY_CONFIG[sensitivityLevel].score;
+          const duration = Math.floor(Math.random() * 90) + 10;
+          const hasBlindSpot = Math.random() > 0.6;
 
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 7));
-        date.setHours(Math.floor(Math.random() * 12) + 18);
+          const { totalScore, grade } = calculateScore(sensitivityScore, duration, hasBlindSpot);
 
-        records.push({
-          id: generateId(),
-          buildingId: building.id,
-          buildingName: building.name,
-          floor,
-          sensitivityLevel,
-          sensitivityScore,
-          duration,
-          hasBlindSpot,
-          blindSpotDescription: hasBlindSpot ? ['楼梯转角', '电梯口', '走廊尽头'][Math.floor(Math.random() * 3)] : undefined,
-          testTime: date.toISOString(),
-          totalScore,
-          grade
-        });
-      }
+          const date = new Date();
+          date.setDate(date.getDate() - Math.floor(Math.random() * 7));
+          date.setHours(Math.floor(Math.random() * 12) + 18);
+
+          records.push({
+            id: generateId(),
+            buildingId: building.id,
+            buildingName: building.name,
+            floor,
+            sensitivityLevel,
+            sensitivityScore,
+            duration,
+            hasBlindSpot,
+            blindSpotDescription: hasBlindSpot ? ['楼梯转角', '电梯口', '走廊尽头'][Math.floor(Math.random() * 3)] : undefined,
+            testTime: date.toISOString(),
+            totalScore,
+            grade,
+            testerId: tester.id,
+            testerName: tester.name
+          });
+        }
+      });
     }
   });
 

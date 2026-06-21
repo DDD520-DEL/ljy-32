@@ -223,6 +223,9 @@ const HomePage: React.FC = () => {
           <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleManageBuilding}>
             管理楼栋信息
           </Button>
+          <Button className={styles.actionBtn + ' ' + styles.collabBtn} onClick={() => Taro.switchTab({ url: '/pages/collaborate/index' })}>
+            邀请邻居协作
+          </Button>
         </View>
       </View>
 

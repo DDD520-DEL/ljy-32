@@ -26,9 +26,21 @@ const RankCard: React.FC<RankCardProps> = ({ item }) => {
       <View className={styles.floorInfo}>
         <View className={styles.floorRow}>
           <Text className={styles.floorNumber}>{item.floor}楼</Text>
-          <Text className={styles.testCount}>{item.testCount}次测试</Text>
+          <Text className={styles.testCount}>
+            {item.testCount}次测试
+            {item.contributors.length > 1 && ` · ${item.contributors.length}人协作`}
+          </Text>
         </View>
         <Text className={styles.buildingName}>{item.buildingName}</Text>
+        {item.contributors.length > 1 && (
+          <View className={styles.contributors}>
+            {item.contributors.map(c => (
+              <View key={c.testerId || c.testTime} className={styles.contributorTag}>
+                <Text className={styles.contributorName}>{c.testerName}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
       <ScoreBadge score={item.averageScore} grade={item.grade} size="large" />

@@ -1,0 +1,439 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: 120rpx;
+  background: linear-gradient(180deg, rgba($color-info, 0.08) 0%, $color-bg-page 30%);
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+
+  .title {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-xs;
+  }
+
+  .subtitle {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+  }
+}
+
+.userCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-card;
+}
+
+.userHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-info 0%, #1DA1A1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .avatarText {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+  }
+}
+
+.userInfo {
+  flex: 1;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.userName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.editBtn {
+  font-size: $font-size-sm;
+  color: $color-info;
+}
+
+.userHint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.nameEditRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.nameInput {
+  flex: 1;
+  height: 64rpx;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0 $spacing-sm;
+  font-size: $font-size-md;
+}
+
+.nameSaveBtn {
+  @include button-reset;
+  height: 64rpx;
+  padding: 0 $spacing-md;
+  background: $color-info;
+  color: $color-text-white;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.section {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.buildingCard {
+  background: linear-gradient(135deg, $color-info 0%, #1DA1A1 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: 0 8rpx 32rpx rgba($color-info, 0.25);
+
+  .buildingName {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+    margin-bottom: $spacing-xs;
+  }
+
+  .buildingAddress {
+    font-size: $font-size-sm;
+    color: rgba($color-text-white, 0.85);
+    margin-bottom: $spacing-xs;
+  }
+
+  .buildingFloors {
+    font-size: $font-size-sm;
+    color: rgba($color-text-white, 0.75);
+  }
+}
+
+.inviteCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+
+  .inviteDesc {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    line-height: $line-height-normal;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.generateBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: $color-info;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &[disabled] {
+    background: $color-text-disabled;
+    opacity: 0.6;
+  }
+}
+
+.codeResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.codeDisplay {
+  background: linear-gradient(135deg, rgba($color-info, 0.1) 0%, rgba($color-info, 0.05) 100%);
+  border: 2rpx dashed $color-info;
+  border-radius: $radius-lg;
+  padding: $spacing-xl $spacing-xxl;
+  text-align: center;
+  width: 100%;
+}
+
+.codeText {
+  font-size: 72rpx;
+  font-weight: $font-weight-bold;
+  color: $color-info;
+  letter-spacing: 16rpx;
+}
+
+.codeMeta {
+  width: 100%;
+  text-align: center;
+
+  .codeMetaText {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    display: block;
+    margin-top: $spacing-xs;
+  }
+}
+
+.codeActions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.copyBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: $color-info;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.regenerateBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: $color-bg-card;
+  border: 2rpx solid $color-info;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-info;
+}
+
+.joinCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+
+  .joinDesc {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    line-height: $line-height-normal;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.inputRow {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.codeInput {
+  flex: 1;
+  height: 80rpx;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: 8rpx;
+  text-align: center;
+  color: $color-text-primary;
+
+  &:focus {
+    border-color: $color-info;
+  }
+}
+
+.joinBtn {
+  @include button-reset;
+  width: 160rpx;
+  height: 80rpx;
+  background: $color-info;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  flex-shrink: 0;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.participantsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.participantItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.participantAvatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .participantAvatarText {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+  }
+}
+
+.participantInfo {
+  flex: 1;
+
+  .participantName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+    display: block;
+    margin-bottom: $spacing-xs;
+  }
+
+  .participantJoinTime {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.organizerBadge {
+  background: rgba($color-warning, 0.1);
+  border-radius: $radius-sm;
+  padding: $spacing-xs $spacing-sm;
+
+  .organizerText {
+    font-size: $font-size-xs;
+    color: $color-warning;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.emptyParticipants {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  .emptyText {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+    display: block;
+    margin-bottom: $spacing-xs;
+  }
+
+  .emptyHint {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.collabList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.collabItem {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  box-shadow: $shadow-card;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.collabInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .collabName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+
+  .collabCount {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+  }
+}
+
+.tips {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+
+  .tipsTitle {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+    display: block;
+  }
+
+  .tipsText {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    line-height: $line-height-loose;
+  }
+}
