@@ -7,6 +7,7 @@ import RankCard from '../../components/RankCard';
 import type { RetestReminder, RetestCycle } from '../../types';
 import { RETEST_CYCLE_CONFIG } from '../../types';
 import { formatDate } from '../../utils/storage';
+import { setPendingRetest } from '../../utils/retestNavigate';
 
 const HomePage: React.FC = () => {
   const {
@@ -222,9 +223,8 @@ const HomePage: React.FC = () => {
   const handleReminderClick = (reminder: RetestReminder) => {
     setShowRetestModal(false);
     setCurrentBuildingId(reminder.buildingId);
-    Taro.navigateTo({
-      url: `/pages/record/index?floor=${reminder.floor}&buildingId=${reminder.buildingId}`
-    });
+    setPendingRetest({ buildingId: reminder.buildingId, floor: reminder.floor });
+    Taro.switchTab({ url: '/pages/record/index' });
   };
 
   const handleDismissReminder = (reminderId: string) => {

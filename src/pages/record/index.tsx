@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, Button, ScrollView, Input, Switch, Image } from '@tarojs/components';
-import Taro, { useDidShow, useRouter } from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
@@ -8,6 +8,7 @@ import FloorCard from '../../components/FloorCard';
 import type { SensitivityLevel } from '../../types';
 import { SENSITIVITY_CONFIG } from '../../types';
 import { savePhotoPermanently, deletePhotoFile } from '../../utils/storage';
+import { consumePendingRetest } from '../../utils/retestNavigate';
 
 const RecordPage: React.FC = () => {
   const {
@@ -19,7 +20,6 @@ const RecordPage: React.FC = () => {
     setCurrentBuildingId
   } = useData();
 
-  const router = useRouter();
   const currentBuilding = getCurrentBuilding();
   const allRecords = getRecordsByCurrentBuilding();
 
@@ -36,25 +36,27 @@ const RecordPage: React.FC = () => {
     photos: [] as string[]
   });
 
-  useEffect(() => {
-    const floor = router.params.floor;
-    const buildingId = router.params.buildingId;
-    
-    if (buildingId && buildingId !== currentBuildingId) {
-      setCurrentBuildingId(buildingId);
-    }
-    
-    if (floor) {
-      setFormData(prev => ({ ...prev, floor }));
-      setTimeout(() => {
-        setShowModal(true);
-      }, 300);
-    }
-  }, [router.params, currentBuildingId, setCurrentBuildingId]);
-
   useDidShow(() => {
     console.log('[RecordPage] did show');
     forceUpdate(prev => prev + 1);
+
+    const pending = consumePendingRetest();
+    if (pending) {
+      if (pending.buildingId !== currentBuildingId) {
+        setCurrentBuildingId(pending.buildingId);
+      }
+      setFormData({
+        floor: String(pending.floor),
+        sensitivityLevel: 'normal',
+        duration: '',
+        hasBlindSpot: false,
+        blindSpotDescription: '',
+        photos: []
+      });
+      setTimeout(() => {
+        setShowModal(true);
+      }, 150);
+    }
   });
 
   const filteredRecords = allRecords.filter(record => {
