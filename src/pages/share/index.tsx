@@ -1,21 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Button, ScrollView } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
+import classNames from 'classnames';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
-import { SENSITIVITY_CONFIG } from '../../types';
+import { SENSITIVITY_CONFIG, REPAIR_STATUS_CONFIG, RepairStatus } from '../../types';
 
 const SharePage: React.FC = () => {
   const {
     currentBuildingId,
     getCurrentBuilding,
     getRecordsByCurrentBuilding,
-    getRankList
+    getRankList,
+    getRepairRecordsByBuilding,
+    getRepairRecordByFloor,
+    markFloorComplaint,
+    updateRepairStatus
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
   const allRecords = getRecordsByCurrentBuilding();
   const rankList = getRankList();
+  const repairRecords = currentBuildingId ? getRepairRecordsByBuilding(currentBuildingId) : [];
 
   const [, forceUpdate] = useState(0);
 
@@ -109,12 +115,51 @@ const SharePage: React.FC = () => {
     }
   };
 
+  const handleMarkComplaint = (floor: number) => {
+    if (!currentBuildingId) return;
+    const issues = getFloorIssues(floor);
+    Taro.showModal({
+      title: '确认标记',
+      content: `确认已向物业投诉${floor}楼的声控灯问题？`,
+      success: (res) => {
+        if (res.confirm) {
+          markFloorComplaint(currentBuildingId, floor, issues);
+          forceUpdate(prev => prev + 1);
+          Taro.showToast({ title: '已标记投诉', icon: 'success' });
+        }
+      }
+    });
+  };
+
+  const handleChangeStatus = (floor: number) => {
+    if (!currentBuildingId) return;
+    const record = getRepairRecordByFloor(currentBuildingId, floor);
+    if (!record) return;
+
+    const statusList: RepairStatus[] = ['pending', 'dispatched', 'repairing', 'fixed'];
+    const statusLabels = statusList.map(s => `${REPAIR_STATUS_CONFIG[s].icon} ${REPAIR_STATUS_CONFIG[s].label}`);
+
+    Taro.showActionSheet({
+      itemList: statusLabels,
+      success: (res) => {
+        const newStatus = statusList[res.tapIndex];
+        updateRepairStatus(record.id, newStatus);
+        forceUpdate(prev => prev + 1);
+        Taro.showToast({ title: '状态已更新', icon: 'success' });
+      }
+    });
+  };
+
   const handleGoTest = () => {
     Taro.switchTab({ url: '/pages/record/index' });
   };
 
   const handleViewRank = () => {
     Taro.switchTab({ url: '/pages/rank/index' });
+  };
+
+  const handleViewRepairBoard = () => {
+    Taro.navigateTo({ url: '/pages/repair/index' });
   };
 
   return (
@@ -149,15 +194,60 @@ const SharePage: React.FC = () => {
 
           <Text className={styles.sectionTitle}>📋 问题楼层列表</Text>
           <View className={styles.poorFloorsList}>
-            {poorFloors.map(item => (
-              <View key={`${item.buildingName}-${item.floor}`} className={styles.poorFloorItem}>
-                <View className={styles.floorInfo}>
-                  <Text className={styles.floorNumber}>{item.floor}楼</Text>
-                  <Text className={styles.floorIssues}>{getFloorIssues(item.floor)}</Text>
+            {poorFloors.map(item => {
+              const repairRecord = currentBuildingId
+                ? getRepairRecordByFloor(currentBuildingId, item.floor)
+                : undefined;
+              const statusConfig = repairRecord ? REPAIR_STATUS_CONFIG[repairRecord.status] : null;
+
+              return (
+                <View key={`${item.buildingName}-${item.floor}`} className={styles.poorFloorItem}>
+                  <View className={styles.floorInfo}>
+                    <View className={styles.floorHeader}>
+                      <Text className={styles.floorNumber}>{item.floor}楼</Text>
+                      {repairRecord?.complaintMarked && (
+                        <View className={styles.complaintBadge}>
+                          <Text>✓ 已投诉</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text className={styles.floorIssues}>{getFloorIssues(item.floor)}</Text>
+                    {statusConfig && (
+                      <View
+                        className={classNames(styles.statusBadge, styles[`status-${repairRecord!.status}`])}
+                        onClick={() => handleChangeStatus(item.floor)}
+                      >
+                        <Text>{statusConfig.icon} {statusConfig.label}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View className={styles.floorActions}>
+                    <Text className={styles.floorScore}>{item.averageScore}分</Text>
+                    {!repairRecord?.complaintMarked ? (
+                      <Button
+                        className={styles.markBtn}
+                        onClick={(e) => {
+                          e.stopPropagation && e.stopPropagation();
+                          handleMarkComplaint(item.floor);
+                        }}
+                      >
+                        标记已投诉
+                      </Button>
+                    ) : (
+                      <Button
+                        className={classNames(styles.markBtn, styles.statusBtn)}
+                        onClick={(e) => {
+                          e.stopPropagation && e.stopPropagation();
+                          handleChangeStatus(item.floor);
+                        }}
+                      >
+                        更新状态
+                      </Button>
+                    )}
+                  </View>
                 </View>
-                <Text className={styles.floorScore}>{item.averageScore}分</Text>
-              </View>
-            ))}
+              );
+            })}
           </View>
 
           <Text className={styles.sectionTitle}>✉️ 投诉文案（一键复制）</Text>
@@ -178,6 +268,9 @@ const SharePage: React.FC = () => {
           <View className={styles.actionButtons}>
             <Button className={styles.actionBtn + ' ' + styles.primary} onClick={handleCopy}>
               复制文案发物业群
+            </Button>
+            <Button className={styles.actionBtn + ' ' + styles.repairBtn} onClick={handleViewRepairBoard}>
+              🔧 查看维修看板
             </Button>
             <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleViewRank}>
               查看完整排行榜

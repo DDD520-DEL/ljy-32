@@ -1,5 +1,20 @@
 export type SensitivityLevel = 'whisper' | 'normal' | 'loud' | 'shout';
 
+export type RepairStatus = 'pending' | 'dispatched' | 'repairing' | 'fixed';
+
+export interface RepairRecord {
+  id: string;
+  buildingId: string;
+  buildingName: string;
+  floor: number;
+  status: RepairStatus;
+  complaintMarked: boolean;
+  complaintTime?: string;
+  statusUpdateTime: string;
+  issues: string;
+  note?: string;
+}
+
 export interface TestRecord {
   id: string;
   buildingId: string;
@@ -79,4 +94,11 @@ export const GRADE_CONFIG = {
   excellent: { label: '优秀', color: '#10B981', minScore: 80 },
   good: { label: '良好', color: '#F59E0B', minScore: 50 },
   poor: { label: '较差', color: '#EF4444', minScore: 0 }
+};
+
+export const REPAIR_STATUS_CONFIG: Record<RepairStatus, { label: string; color: string; bgColor: string; icon: string; step: number }> = {
+  pending: { label: '待处理', color: '#EF4444', bgColor: 'rgba(239, 68, 68, 0.1)', icon: '⏳', step: 1 },
+  dispatched: { label: '已派单', color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.1)', icon: '📋', step: 2 },
+  repairing: { label: '维修中', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.1)', icon: '🔧', step: 3 },
+  fixed: { label: '已修复', color: '#10B981', bgColor: 'rgba(16, 185, 129, 0.1)', icon: '✅', step: 4 }
 };

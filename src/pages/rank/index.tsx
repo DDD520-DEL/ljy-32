@@ -12,12 +12,14 @@ const RankPage: React.FC = () => {
     currentBuildingId,
     getCurrentBuilding,
     getRankList,
-    getRecordsByCurrentBuilding
+    getRecordsByCurrentBuilding,
+    getRepairRecordsByBuilding
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
   const rankList = getRankList();
   const allRecords = getRecordsByCurrentBuilding();
+  const repairRecords = currentBuildingId ? getRepairRecordsByBuilding(currentBuildingId) : [];
 
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [, forceUpdate] = useState(0);
@@ -48,6 +50,10 @@ const RankPage: React.FC = () => {
     });
   };
 
+  const handleViewRepairBoard = () => {
+    Taro.navigateTo({ url: '/pages/repair/index' });
+  };
+
   const getPodiumStyle = (rank: number): 'gold' | 'silver' | 'bronze' => {
     if (rank === 1) return 'gold';
     if (rank === 2) return 'silver';
@@ -57,10 +63,23 @@ const RankPage: React.FC = () => {
   return (
     <ScrollView className={styles.container} scrollY>
       <View className={styles.header}>
-        <Text className={styles.title}>楼层灵敏度排行榜</Text>
-        <Text className={styles.subtitle}>
-          {currentBuilding ? `${currentBuilding.name} · 共${allRecords.length}次测试` : '请先选择楼栋'}
-        </Text>
+        <View className={styles.headerRow}>
+          <View className={styles.headerText}>
+            <Text className={styles.title}>楼层灵敏度排行榜</Text>
+            <Text className={styles.subtitle}>
+              {currentBuilding ? `${currentBuilding.name} · 共${allRecords.length}次测试` : '请先选择楼栋'}
+            </Text>
+          </View>
+          <View className={styles.repairEntry} onClick={handleViewRepairBoard}>
+            <Text className={styles.repairIcon}>🔧</Text>
+            <Text className={styles.repairText}>维修看板</Text>
+            {repairRecords.length > 0 && (
+              <View className={styles.repairBadge}>
+                <Text>{repairRecords.filter(r => r.status !== 'fixed').length}</Text>
+              </View>
+            )}
+          </View>
+        </View>
       </View>
 
       <View className={styles.summaryCard}>

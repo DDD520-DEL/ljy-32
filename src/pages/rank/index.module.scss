@@ -11,6 +11,64 @@
   margin-bottom: $spacing-xl;
 }
 
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.headerText {
+  flex: 1;
+}
+
+.repairEntry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: linear-gradient(135deg, $color-info 0%, #3B82F6 100%);
+  border-radius: $radius-lg;
+  box-shadow: 0 4rpx 16rpx rgba($color-info, 0.25);
+  position: relative;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+}
+
+.repairIcon {
+  font-size: $font-size-xl;
+  margin-bottom: 4rpx;
+}
+
+.repairText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.repairBadge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 10rpx;
+  background: $color-error;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  Text {
+    font-size: 20rpx;
+    color: $color-text-white;
+    font-weight: $font-weight-bold;
+  }
+}
+
 .title {
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;

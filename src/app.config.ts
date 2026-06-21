@@ -5,7 +5,8 @@ export default defineAppConfig({
     'pages/rank/index',
     'pages/collaborate/index',
     'pages/share/index',
-    'pages/detail/index'
+    'pages/detail/index',
+    'pages/repair/index'
   ],
   window: {
     backgroundTextStyle: 'light',

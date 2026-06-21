@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession } from '../types';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus } from '../types';
 import { storage, calculateScore, generateId } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 
 interface DataContextType {
   buildings: Building[];
   records: TestRecord[];
+  repairRecords: RepairRecord[];
   currentBuildingId: string;
   currentUser: NeighborUser | null;
   collaborations: CollaborationSession[];
@@ -24,6 +25,11 @@ interface DataContextType {
   setCurrentUserName: (name: string) => void;
   getParticipants: (buildingId: string) => NeighborUser[];
   getRecordsByFloor: (buildingId: string, floor: number) => TestRecord[];
+  getRepairRecordsByBuilding: (buildingId: string) => RepairRecord[];
+  getRepairRecordByFloor: (buildingId: string, floor: number) => RepairRecord | undefined;
+  createOrUpdateRepairRecord: (record: Omit<RepairRecord, 'id' | 'statusUpdateTime'>) => void;
+  markFloorComplaint: (buildingId: string, floor: number, issues: string) => void;
+  updateRepairStatus: (id: string, status: RepairStatus, note?: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -31,6 +37,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [records, setRecords] = useState<TestRecord[]>([]);
+  const [repairRecords, setRepairRecords] = useState<RepairRecord[]>([]);
   const [currentBuildingId, setCurrentBuildingId] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<NeighborUser | null>(null);
   const [collaborations, setCollaborations] = useState<CollaborationSession[]>([]);
@@ -38,6 +45,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     setBuildings(storage.getBuildings());
     setRecords(storage.getRecords());
+    setRepairRecords(storage.getRepairRecords());
     setCurrentBuildingId(storage.getCurrentBuildingId());
     setCurrentUser(neighborStorage.getCurrentUser());
     setCollaborations(neighborStorage.getCollaborations());
@@ -255,11 +263,52 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return neighborStorage.getParticipantsByBuilding(buildingId);
   };
 
+  const getRepairRecordsByBuilding = (buildingId: string): RepairRecord[] => {
+    return storage.getRepairRecordsByBuilding(buildingId);
+  };
+
+  const getRepairRecordByFloor = (buildingId: string, floor: number): RepairRecord | undefined => {
+    return storage.getRepairRecordByFloor(buildingId, floor);
+  };
+
+  const createOrUpdateRepairRecord = (record: Omit<RepairRecord, 'id' | 'statusUpdateTime'>) => {
+    const updated = storage.upsertRepairRecord(record);
+    setRepairRecords(updated);
+  };
+
+  const markFloorComplaint = (buildingId: string, floor: number, issues: string) => {
+    const building = buildings.find(b => b.id === buildingId);
+    const existing = storage.getRepairRecordByFloor(buildingId, floor);
+    const now = new Date().toISOString();
+
+    if (existing) {
+      const updated = storage.markComplaint(buildingId, floor);
+      setRepairRecords(updated);
+    } else {
+      const updated = storage.upsertRepairRecord({
+        buildingId,
+        buildingName: building?.name || '',
+        floor,
+        status: 'pending',
+        complaintMarked: true,
+        complaintTime: now,
+        issues
+      });
+      setRepairRecords(updated);
+    }
+  };
+
+  const updateRepairStatus = (id: string, status: RepairStatus, note?: string) => {
+    const updated = storage.updateRepairStatus(id, status, note);
+    setRepairRecords(updated);
+  };
+
   return (
     <DataContext.Provider
       value={{
         buildings,
         records,
+        repairRecords,
         currentBuildingId,
         currentUser,
         collaborations,
@@ -277,7 +326,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         joinByCode,
         setCurrentUserName,
         getParticipants,
-        getRecordsByFloor
+        getRecordsByFloor,
+        getRepairRecordsByBuilding,
+        getRepairRecordByFloor,
+        createOrUpdateRepairRecord,
+        markFloorComplaint,
+        updateRepairStatus
       }}
     >
       {children}

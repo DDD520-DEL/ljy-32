@@ -1,9 +1,10 @@
 import Taro from '@tarojs/taro';
-import type { Building, TestRecord } from '../types';
+import type { Building, TestRecord, RepairRecord, RepairStatus } from '../types';
 
 const BUILDINGS_KEY = 'light_evaluator_buildings';
 const RECORDS_KEY = 'light_evaluator_records';
 const CURRENT_BUILDING_KEY = 'light_evaluator_current_building';
+const REPAIR_RECORDS_KEY = 'light_evaluator_repair_records';
 
 export const storage = {
   getBuildings(): Building[] {
@@ -121,6 +122,96 @@ export const storage = {
     return this.getRecords().filter(
       r => r.buildingId === buildingId && r.floor === floor
     );
+  },
+
+  getRepairRecords(): RepairRecord[] {
+    try {
+      const data = Taro.getStorageSync(REPAIR_RECORDS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('[Storage] getRepairRecords error:', e);
+      return [];
+    }
+  },
+
+  saveRepairRecords(records: RepairRecord[]): void {
+    try {
+      Taro.setStorageSync(REPAIR_RECORDS_KEY, JSON.stringify(records));
+    } catch (e) {
+      console.error('[Storage] saveRepairRecords error:', e);
+    }
+  },
+
+  getRepairRecordsByBuilding(buildingId: string): RepairRecord[] {
+    return this.getRepairRecords().filter(r => r.buildingId === buildingId);
+  },
+
+  getRepairRecordByFloor(buildingId: string, floor: number): RepairRecord | undefined {
+    return this.getRepairRecords().find(
+      r => r.buildingId === buildingId && r.floor === floor
+    );
+  },
+
+  addRepairRecord(record: RepairRecord): RepairRecord[] {
+    const records = this.getRepairRecords();
+    records.push(record);
+    this.saveRepairRecords(records);
+    return records;
+  },
+
+  updateRepairStatus(id: string, status: RepairStatus, note?: string): RepairRecord[] {
+    const records = this.getRepairRecords();
+    const index = records.findIndex(r => r.id === id);
+    if (index > -1) {
+      records[index] = {
+        ...records[index],
+        status,
+        statusUpdateTime: new Date().toISOString(),
+        note: note || records[index].note
+      };
+      this.saveRepairRecords(records);
+    }
+    return records;
+  },
+
+  markComplaint(buildingId: string, floor: number): RepairRecord[] {
+    const records = this.getRepairRecords();
+    const index = records.findIndex(
+      r => r.buildingId === buildingId && r.floor === floor
+    );
+    const now = new Date().toISOString();
+    if (index > -1) {
+      records[index] = {
+        ...records[index],
+        complaintMarked: true,
+        complaintTime: now
+      };
+    }
+    this.saveRepairRecords(records);
+    return records;
+  },
+
+  upsertRepairRecord(record: Omit<RepairRecord, 'id' | 'statusUpdateTime'> & { statusUpdateTime?: string }): RepairRecord[] {
+    const records = this.getRepairRecords();
+    const existingIndex = records.findIndex(
+      r => r.buildingId === record.buildingId && r.floor === record.floor
+    );
+    const now = new Date().toISOString();
+    if (existingIndex > -1) {
+      records[existingIndex] = {
+        ...records[existingIndex],
+        ...record,
+        statusUpdateTime: record.statusUpdateTime || records[existingIndex].statusUpdateTime
+      };
+    } else {
+      records.push({
+        ...record,
+        id: generateId(),
+        statusUpdateTime: record.statusUpdateTime || now
+      });
+    }
+    this.saveRepairRecords(records);
+    return records;
   }
 };
 

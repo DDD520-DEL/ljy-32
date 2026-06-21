@@ -1,0 +1,308 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: 120rpx;
+  background: linear-gradient(180deg, rgba($color-info, 0.06) 0%, $color-bg-page 20%);
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.statsCard {
+  background: linear-gradient(135deg, $color-info 0%, #3B82F6 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  box-shadow: 0 8rpx 32rpx rgba($color-info, 0.2);
+}
+
+.statsRow {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.statItem {
+  .value {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+    margin-bottom: 4rpx;
+  }
+
+  .label {
+    font-size: $font-size-xs;
+    color: rgba($color-text-white, 0.85);
+  }
+}
+
+.filterBar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-button;
+  background: $color-bg-card;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.active {
+    background: rgba($color-info, 0.1);
+    color: $color-info;
+    border-color: $color-info;
+  }
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.repairList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.repairCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-md;
+}
+
+.floorInfo {
+  .floorNumber {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+
+  .buildingName {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    margin-top: 4rpx;
+  }
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+
+  &.status-pending {
+    background: rgba($color-error, 0.1);
+    color: $color-error;
+  }
+
+  &.status-dispatched {
+    background: rgba($color-warning, 0.1);
+    color: $color-warning;
+  }
+
+  &.status-repairing {
+    background: rgba($color-info, 0.1);
+    color: $color-info;
+  }
+
+  &.status-fixed {
+    background: rgba($color-success, 0.1);
+    color: $color-success;
+  }
+}
+
+.issuesSection {
+  margin-bottom: $spacing-md;
+
+  .issuesLabel {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-xs;
+  }
+
+  .issuesText {
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    line-height: 1.5;
+  }
+}
+
+.progressSection {
+  margin-bottom: $spacing-md;
+}
+
+.progressSteps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.progressLine {
+  position: absolute;
+  top: 20rpx;
+  left: 40rpx;
+  right: 40rpx;
+  height: 4rpx;
+  background: $color-divider;
+  z-index: 0;
+}
+
+.progressLineActive {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, $color-info 0%, #3B82F6 100%);
+  border-radius: $radius-round;
+  transition: width $transition-base;
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  flex: 1;
+}
+
+.stepDot {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  margin-bottom: $spacing-xs;
+  background: $color-bg-page;
+  border: 4rpx solid $color-divider;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &.active {
+    background: linear-gradient(135deg, $color-info 0%, #3B82F6 100%);
+    border-color: transparent;
+    color: $color-text-white;
+  }
+
+  &.completed {
+    background: $color-success;
+    border-color: transparent;
+    color: $color-text-white;
+  }
+}
+
+.stepLabel {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+
+  &.active {
+    color: $color-info;
+    font-weight: $font-weight-semibold;
+  }
+
+  &.completed {
+    color: $color-success;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.metaSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.metaInfo {
+  display: flex;
+  gap: $spacing-md;
+
+  .metaItem {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+
+    &.complained {
+      color: $color-success;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.actionBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-button;
+  background: rgba($color-primary, 0.1);
+  color: $color-primary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+
+  .emptyIcon {
+    font-size: 120rpx;
+    margin-bottom: $spacing-md;
+    opacity: 0.3;
+  }
+
+  .emptyText {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .emptyHint {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
