@@ -313,6 +313,10 @@ const HomePage: React.FC = () => {
     });
   };
 
+  const handleGoToKnowledge = () => {
+    Taro.navigateTo({ url: '/pages/knowledge/index' });
+  };
+
   const handleExportJSON = async () => {
     if (isExporting) return;
     setIsExporting(true);
@@ -476,6 +480,9 @@ const HomePage: React.FC = () => {
           </View>
           <Button className={styles.actionBtn + ' ' + styles.dataManageBtn} onClick={() => setShowDataManageModal(true)}>
             💾 数据管理（导出/备份恢复）
+          </Button>
+          <Button className={styles.actionBtn + ' ' + styles.knowledgeBtn} onClick={handleGoToKnowledge}>
+            📚 声控灯小知识科普
           </Button>
         </View>
       </View>

@@ -1,0 +1,162 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding $spacing-xxl;
+  background: linear-gradient(180deg, rgba($color-primary, 0.08) 0%, $color-bg-page 30%);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg 0;
+}
+
+.headerContent {
+  flex: 1;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.iconBox {
+  width: 120rpx;
+  height: 120rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
+}
+
+.bulbIcon {
+  font-size: 60rpx;
+}
+
+.introCard {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-card;
+}
+
+.introText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+}
+
+.faqItem {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &.expanded {
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+.questionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg;
+  transition: background $transition-base;
+
+  &:active {
+    background: $color-bg-page;
+  }
+}
+
+.questionLeft {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.questionIcon {
+  font-size: $font-size-xl;
+  flex-shrink: 0;
+}
+
+.questionText {
+  flex: 1;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+}
+
+.arrow {
+  font-size: $font-size-lg;
+  color: $color-text-tertiary;
+  transition: transform $transition-base;
+  flex-shrink: 0;
+  margin-left: $spacing-sm;
+
+  &.arrowUp {
+    transform: rotate(180deg);
+    color: $color-primary;
+  }
+}
+
+.answerContainer {
+  padding: 0 $spacing-lg $spacing-lg;
+}
+
+.answerDivider {
+  height: 1rpx;
+  background: $color-border;
+  margin-bottom: $spacing-md;
+}
+
+.answerText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+}
+
+.tipCard {
+  background: linear-gradient(135deg, rgba($color-primary, 0.08) 0%, rgba($color-success, 0.08) 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  border-left: 6rpx solid $color-primary;
+}
+
+.tipTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.tipText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+}

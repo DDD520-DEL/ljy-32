@@ -602,6 +602,11 @@
   color: $color-text-white;
 }
 
+.knowledgeBtn {
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  color: $color-text-white;
+}
+
 .dataManageModal {
   width: 100%;
   max-width: 680rpx;

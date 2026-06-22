@@ -10,7 +10,8 @@ export default defineAppConfig({
     'pages/repair/index',
     'pages/report/index',
     'pages/compare/index',
-    'pages/compareResult/index'
+    'pages/compareResult/index',
+    'pages/knowledge/index'
   ],
   window: {
     backgroundTextStyle: 'light',
