@@ -361,9 +361,21 @@ const HomePage: React.FC = () => {
           try {
             const result = await importData();
             if (result.success) {
-              Taro.showToast({ title: result.message, icon: 'success' });
               setShowDataManageModal(false);
               forceUpdate(prev => prev + 1);
+              if (result.buildingInvalid) {
+                Taro.showModal({
+                  title: '楼栋需重新选择',
+                  content: '数据已恢复成功，但之前选中的楼栋不在备份数据中。请选择一个楼栋继续使用。',
+                  showCancel: false,
+                  confirmText: '去选择',
+                  success: () => {
+                    handleManageBuilding();
+                  }
+                });
+              } else {
+                Taro.showToast({ title: result.message, icon: 'success' });
+              }
             } else {
               Taro.showToast({ title: result.message, icon: 'none' });
             }

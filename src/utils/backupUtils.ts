@@ -15,6 +15,16 @@ export interface BackupData {
 
 const BACKUP_VERSION = '1.0';
 
+const CSV_BOM = '\uFEFF';
+
+function escapeCSVField(value: string): string {
+  if (!value) return '';
+  const needsQuoting = value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r');
+  if (!needsQuoting) return value;
+  const escaped = value.replace(/"/g, '""');
+  return `"${escaped}"`;
+}
+
 export const backupUtils = {
   exportAllData(): BackupData {
     try {
@@ -167,76 +177,76 @@ export const backupUtils = {
     const { buildings, records, repairRecords, complaintRecords } = data;
 
     const buildingsCSV = [
-      ['楼栋ID', '楼栋名称', '地址', '总楼层', '创建时间', '复测周期', '自定义天数'].join(','),
+      ['楼栋ID', '楼栋名称', '地址', '总楼层', '创建时间', '复测周期', '自定义天数'].map(escapeCSVField).join(','),
       ...buildings.map(b => [
         b.id,
-        `"${b.name}"`,
-        `"${b.address}"`,
-        b.totalFloors,
+        b.name,
+        b.address,
+        String(b.totalFloors),
         b.createTime,
         b.retestCycle,
-        b.customRetestDays || ''
-      ].join(','))
-    ].join('\n');
+        b.customRetestDays ? String(b.customRetestDays) : ''
+      ].map(escapeCSVField).join(','))
+    ].join('\r\n');
 
     const recordsCSV = [
-      ['记录ID', '楼栋ID', '楼栋名称', '楼层', '灵敏度等级', '灵敏度分数', '亮灯时长(秒)', '是否有盲区', '盲区描述', '综合评分', '评级', '测试时间', '测试人ID', '测试人姓名', '灯具品牌', '灯具型号', '照片数量'].join(','),
+      ['记录ID', '楼栋ID', '楼栋名称', '楼层', '灵敏度等级', '灵敏度分数', '亮灯时长(秒)', '是否有盲区', '盲区描述', '综合评分', '评级', '测试时间', '测试人ID', '测试人姓名', '灯具品牌', '灯具型号', '照片数量'].map(escapeCSVField).join(','),
       ...records.map(r => [
         r.id,
         r.buildingId,
-        `"${r.buildingName}"`,
-        r.floor,
+        r.buildingName,
+        String(r.floor),
         r.sensitivityLevel,
-        r.sensitivityScore,
-        r.duration,
+        String(r.sensitivityScore),
+        String(r.duration),
         r.hasBlindSpot ? '是' : '否',
-        r.blindSpotDescription ? `"${r.blindSpotDescription}"` : '',
-        r.totalScore,
+        r.blindSpotDescription || '',
+        String(r.totalScore),
         r.grade,
         r.testTime,
         r.testerId || '',
-        r.testerName ? `"${r.testerName}"` : '',
-        r.lightBrand ? `"${r.lightBrand}"` : '',
-        r.lightModel ? `"${r.lightModel}"` : '',
-        r.photos?.length || 0
-      ].join(','))
-    ].join('\n');
+        r.testerName || '',
+        r.lightBrand || '',
+        r.lightModel || '',
+        String(r.photos?.length || 0)
+      ].map(escapeCSVField).join(','))
+    ].join('\r\n');
 
     const repairRecordsCSV = [
-      ['记录ID', '楼栋ID', '楼栋名称', '楼层', '状态', '是否已投诉', '投诉时间', '状态更新时间', '问题描述', '备注'].join(','),
+      ['记录ID', '楼栋ID', '楼栋名称', '楼层', '状态', '是否已投诉', '投诉时间', '状态更新时间', '问题描述', '备注'].map(escapeCSVField).join(','),
       ...repairRecords.map(r => [
         r.id,
         r.buildingId,
-        `"${r.buildingName}"`,
-        r.floor,
+        r.buildingName,
+        String(r.floor),
         r.status,
         r.complaintMarked ? '是' : '否',
         r.complaintTime || '',
         r.statusUpdateTime,
-        `"${r.issues}"`,
-        r.note ? `"${r.note}"` : ''
-      ].join(','))
-    ].join('\n');
+        r.issues,
+        r.note || ''
+      ].map(escapeCSVField).join(','))
+    ].join('\r\n');
 
     const complaintRecordsCSV = [
-      ['记录ID', '楼栋ID', '楼栋名称', '投诉内容', '投诉时间', '问题楼层', '照片数量', '状态', '物业回复', '回复时间', '态度评分', '速度评分', '综合评分', '反馈备注'].join(','),
+      ['记录ID', '楼栋ID', '楼栋名称', '投诉内容', '投诉时间', '问题楼层', '照片数量', '状态', '物业回复', '回复时间', '态度评分', '速度评分', '综合评分', '反馈备注'].map(escapeCSVField).join(','),
       ...complaintRecords.map(c => [
         c.id,
         c.buildingId,
-        `"${c.buildingName}"`,
-        `"${c.complaintText.replace(/\n/g, ' ')}"`,
+        c.buildingName,
+        c.complaintText,
         c.complaintTime,
-        `"${c.poorFloors.join('、')}"`,
-        c.photoCount,
+        c.poorFloors.join('、'),
+        String(c.photoCount),
         c.status,
-        c.feedback?.replyContent ? `"${c.feedback.replyContent.replace(/\n/g, ' ')}"` : '',
+        c.feedback?.replyContent || '',
         c.feedback?.replyTime || '',
-        c.feedback?.attitudeScore || '',
-        c.feedback?.speedScore || '',
-        c.feedback?.overallScore || '',
-        c.feedback?.note ? `"${c.feedback.note}"` : ''
-      ].join(','))
-    ].join('\n');
+        c.feedback?.attitudeScore ? String(c.feedback.attitudeScore) : '',
+        c.feedback?.speedScore ? String(c.feedback.speedScore) : '',
+        c.feedback?.overallScore ? String(c.feedback.overallScore) : '',
+        c.feedback?.note || ''
+      ].map(escapeCSVField).join(','))
+    ].join('\r\n');
 
     return {
       buildings: buildingsCSV,
@@ -249,14 +259,10 @@ export const backupUtils = {
   generateFullCSV(data: BackupData): string {
     const csv = this.generateCSV(data);
     let full = '';
-    full += '=== 楼栋信息 ===\n';
-    full += csv.buildings + '\n\n';
-    full += '=== 测试记录 ===\n';
-    full += csv.records + '\n\n';
-    full += '=== 维修记录 ===\n';
-    full += csv.repairRecords + '\n\n';
-    full += '=== 投诉记录 ===\n';
-    full += csv.complaintRecords + '\n';
+    full += csv.buildings + '\r\n\r\n';
+    full += csv.records + '\r\n\r\n';
+    full += csv.repairRecords + '\r\n\r\n';
+    full += csv.complaintRecords + '\r\n';
     return full;
   },
 
@@ -287,7 +293,37 @@ export const backupUtils = {
   }
 };
 
-export const saveFileToDevice = async (content: string, fileName: string, fileType: string = 'text'): Promise<boolean> => {
+export const saveFileToDevice = async (content: string, fileName: string, fileType: string = 'text', silent: boolean = false): Promise<boolean> => {
+  try {
+    const fs = Taro.getFileSystemManager();
+    const userDataPath = Taro.env.USER_DATA_PATH;
+    if (!userDataPath) {
+      if (!silent) Taro.showToast({ title: '无法获取存储路径', icon: 'none' });
+      return false;
+    }
+
+    const filePath = `${userDataPath}/${fileName}`;
+
+    fs.writeFileSync(filePath, content, 'utf8');
+
+    if (!silent) {
+      Taro.showModal({
+        title: '文件已保存',
+        content: `文件已保存到：\n${filePath}\n\n您可以在"文件管理"中找到该文件。`,
+        showCancel: false,
+        confirmText: '知道了'
+      });
+    }
+
+    return true;
+  } catch (e) {
+    console.error('[Backup] saveFileToDevice error:', e);
+    if (!silent) Taro.showToast({ title: '保存文件失败', icon: 'none' });
+    return false;
+  }
+};
+
+export const saveCSVFilesToDevice = async (data: BackupData): Promise<boolean> => {
   try {
     const fs = Taro.getFileSystemManager();
     const userDataPath = Taro.env.USER_DATA_PATH;
@@ -296,20 +332,31 @@ export const saveFileToDevice = async (content: string, fileName: string, fileTy
       return false;
     }
 
-    const filePath = `${userDataPath}/${fileName}`;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const csvData = backupUtils.generateCSV(data);
 
-    fs.writeFileSync(filePath, content, 'utf8');
+    const files = [
+      { name: `声控灯_楼栋信息_${dateStr}.csv`, content: CSV_BOM + csvData.buildings },
+      { name: `声控灯_测试记录_${dateStr}.csv`, content: CSV_BOM + csvData.records },
+      { name: `声控灯_维修记录_${dateStr}.csv`, content: CSV_BOM + csvData.repairRecords },
+      { name: `声控灯_投诉记录_${dateStr}.csv`, content: CSV_BOM + csvData.complaintRecords }
+    ];
+
+    for (const file of files) {
+      const filePath = `${userDataPath}/${file.name}`;
+      fs.writeFileSync(filePath, file.content, 'utf8');
+    }
 
     Taro.showModal({
-      title: '文件已保存',
-      content: `文件已保存到：\n${filePath}\n\n您可以在"文件管理"中找到该文件。`,
+      title: 'CSV 文件已保存',
+      content: `已导出 ${files.length} 个 CSV 表格文件：\n\n${files.map((f, i) => `${i + 1}. ${f.name}`).join('\n')}\n\n保存位置：${userDataPath}\n\n可用 Excel 分别打开查看。`,
       showCancel: false,
       confirmText: '知道了'
     });
 
     return true;
   } catch (e) {
-    console.error('[Backup] saveFileToDevice error:', e);
+    console.error('[Backup] saveCSVFilesToDevice error:', e);
     Taro.showToast({ title: '保存文件失败', icon: 'none' });
     return false;
   }

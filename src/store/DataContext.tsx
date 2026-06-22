@@ -4,7 +4,7 @@ import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG, UNKNOWN_BRAND } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 import { generateReport } from '../utils/reportUtils';
-import { backupUtils, saveFileToDevice, readFileFromDevice } from '../utils/backupUtils';
+import { backupUtils, saveFileToDevice, saveCSVFilesToDevice, readFileFromDevice } from '../utils/backupUtils';
 import type { BackupData } from '../utils/backupUtils';
 
 interface DataContextType {
@@ -54,7 +54,7 @@ interface DataContextType {
   exportToJSON: () => Promise<boolean>;
   exportToText: () => Promise<boolean>;
   exportToCSV: () => Promise<boolean>;
-  importData: () => Promise<{ success: boolean; message: string }>;
+  importData: () => Promise<{ success: boolean; message: string; buildingInvalid?: boolean }>;
   getBackupStats: () => { buildingCount: number; recordCount: number; repairCount: number; complaintCount: number };
 }
 
@@ -666,16 +666,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const exportToCSV = async (): Promise<boolean> => {
     try {
       const data = backupUtils.exportAllData();
-      const csv = backupUtils.generateFullCSV(data);
-      const fileName = `声控灯数据表格_${new Date().toISOString().slice(0, 10)}.csv`;
-      return await saveFileToDevice(csv, fileName, 'csv');
+      return await saveCSVFilesToDevice(data);
     } catch (e) {
       console.error('[DataContext] exportToCSV error:', e);
       return false;
     }
   };
 
-  const importData = async (): Promise<{ success: boolean; message: string }> => {
+  const importData = async (): Promise<{ success: boolean; message: string; buildingInvalid?: boolean }> => {
     try {
       const content = await readFileFromDevice();
       if (!content) {
@@ -684,7 +682,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       let data: any;
       try {
-        data = JSON.parse(content);
+        const cleanContent = content.replace(/^\uFEFF/, '');
+        data = JSON.parse(cleanContent);
       } catch (e) {
         return { success: false, message: '文件格式错误，请选择 JSON 格式的备份文件' };
       }
@@ -695,12 +694,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const result = backupUtils.importAllData(data);
       if (result.success) {
-        setBuildings(storage.getBuildings());
+        const newBuildings = storage.getBuildings();
+        setBuildings(newBuildings);
         setRecords(storage.getRecords());
         setRepairRecords(storage.getRepairRecords());
         setComplaintRecords(storage.getComplaintRecords());
         setScoreWeights(storage.getScoreWeights());
-        setCurrentBuildingId(storage.getCurrentBuildingId());
+
+        const oldBuildingId = storage.getCurrentBuildingId();
+        const buildingExists = newBuildings.some(b => b.id === oldBuildingId);
+        if (buildingExists) {
+          setCurrentBuildingId(oldBuildingId);
+          return { success: true, message: '数据恢复成功', buildingInvalid: false };
+        } else {
+          const fallbackId = newBuildings.length > 0 ? newBuildings[0].id : '';
+          setCurrentBuildingId(fallbackId);
+          storage.saveCurrentBuildingId(fallbackId);
+          return { success: true, message: '数据恢复成功', buildingInvalid: true };
+        }
       }
       return result;
     } catch (e) {
