@@ -7,7 +7,9 @@ export default defineAppConfig({
     'pages/share/index',
     'pages/detail/index',
     'pages/repair/index',
-    'pages/report/index'
+    'pages/report/index',
+    'pages/compare/index',
+    'pages/compareResult/index'
   ],
   window: {
     backgroundTextStyle: 'light',

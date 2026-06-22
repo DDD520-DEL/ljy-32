@@ -184,3 +184,97 @@ export interface ReportData {
   blindSpotFloors: number[];
   contributors: Array<{ testerName: string; testCount: number }>;
 }
+
+export interface BuildingStats {
+  buildingId: string;
+  buildingName: string;
+  address: string;
+  totalFloors: number;
+  totalTests: number;
+  testedFloors: number;
+  testedFloorsRatio: number;
+  avgSensitivityScore: number;
+  avgTotalScore: number;
+  excellentCount: number;
+  excellentRatio: number;
+  goodCount: number;
+  goodRatio: number;
+  poorCount: number;
+  poorRatio: number;
+  whisperCount: number;
+  normalCount: number;
+  loudCount: number;
+  shoutCount: number;
+  needReplaceCount: number;
+  needReplaceRatio: number;
+  blindSpotCount: number;
+  lastTestTime: string | null;
+}
+
+export type CompareMetricKey =
+  | 'avgTotalScore'
+  | 'avgSensitivityScore'
+  | 'excellentRatio'
+  | 'poorRatio'
+  | 'needReplaceRatio'
+  | 'testedFloorsRatio';
+
+export interface CompareMetricConfig {
+  key: CompareMetricKey;
+  label: string;
+  unit: string;
+  isPercentage: boolean;
+  higherIsBetter: boolean;
+  color: string;
+}
+
+export const COMPARE_METRICS: CompareMetricConfig[] = [
+  {
+    key: 'avgTotalScore',
+    label: '平均综合得分',
+    unit: '分',
+    isPercentage: false,
+    higherIsBetter: true,
+    color: '#FF6B35'
+  },
+  {
+    key: 'avgSensitivityScore',
+    label: '平均灵敏度',
+    unit: '分',
+    isPercentage: false,
+    higherIsBetter: true,
+    color: '#8B5CF6'
+  },
+  {
+    key: 'excellentRatio',
+    label: '优秀率',
+    unit: '%',
+    isPercentage: true,
+    higherIsBetter: true,
+    color: '#10B981'
+  },
+  {
+    key: 'poorRatio',
+    label: '较差率',
+    unit: '%',
+    isPercentage: true,
+    higherIsBetter: false,
+    color: '#F59E0B'
+  },
+  {
+    key: 'needReplaceRatio',
+    label: '待更换比例',
+    unit: '%',
+    isPercentage: true,
+    higherIsBetter: false,
+    color: '#EF4444'
+  },
+  {
+    key: 'testedFloorsRatio',
+    label: '已测覆盖率',
+    unit: '%',
+    isPercentage: true,
+    higherIsBetter: true,
+    color: '#0EA5E9'
+  }
+];

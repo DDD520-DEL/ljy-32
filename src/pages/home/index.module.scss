@@ -153,6 +153,11 @@
     height: $button-height-md;
     font-size: $font-size-md;
   }
+
+  &.compareBtn {
+    background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
+    color: $color-text-white;
+  }
 }
 
 .rankPreview {

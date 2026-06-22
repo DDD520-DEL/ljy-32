@@ -1,0 +1,620 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: $spacing-xxl;
+  background: linear-gradient(180deg, rgba($color-primary, 0.06) 0%, $color-bg-page 20%);
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.headerText {
+  flex: 1;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.viewToggle {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-xs;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  box-shadow: $shadow-card;
+}
+
+.toggleBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  background: transparent;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.25);
+  }
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.buildingLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex: 1;
+  min-width: 200rpx;
+}
+
+.legendColor {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: $radius-xs;
+  flex-shrink: 0;
+}
+
+.legendText {
+  flex: 1;
+  min-width: 0;
+}
+
+.legendName {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.legendSub {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metricSection {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+.metricHeader {
+  margin-bottom: $spacing-lg;
+}
+
+.metricTitleRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.metricIcon {
+  font-size: $font-size-lg;
+}
+
+.metricTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.metricTip {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.barChart {
+  position: relative;
+}
+
+.barContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: $spacing-sm;
+  height: 320rpx;
+  padding-left: $spacing-lg;
+  padding-bottom: $spacing-md;
+  position: relative;
+}
+
+.barColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.barValueWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  position: relative;
+}
+
+.barValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+}
+
+.rankBadge {
+  position: absolute;
+  top: -36rpx;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.rankBadgeText {
+  font-size: $font-size-lg;
+}
+
+.barTrack {
+  width: 100%;
+  max-width: 80rpx;
+  height: calc(100% - 80rpx);
+  background: $color-bg-page;
+  border-radius: $radius-md $radius-md 0 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.barFill {
+  width: 100%;
+  border-radius: $radius-md $radius-md 0 0;
+  min-height: 8rpx;
+  transition: height $transition-slow;
+}
+
+.barLabel {
+  margin-top: $spacing-sm;
+  max-width: 100%;
+}
+
+.barLabelText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  display: block;
+}
+
+.yAxisLabels {
+  position: absolute;
+  left: 0;
+  top: $spacing-sm;
+  bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.yAxisLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  width: 56rpx;
+  text-align: right;
+}
+
+.progressList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.progressItem {
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.progressBuilding {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.progressDot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+}
+
+.progressBuildingName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.progressValueRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.progressValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+}
+
+.rankEmoji {
+  font-size: $font-size-md;
+}
+
+.progressTrack {
+  height: 20rpx;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: $radius-round;
+  transition: width $transition-slow;
+  min-width: 8rpx;
+}
+
+.detailSection {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.tableWrapper {
+  margin: 0 -#{$spacing-lg};
+  padding: 0 $spacing-lg;
+}
+
+.dataTable {
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+}
+
+.tableHeader {
+  display: flex;
+  background: $color-bg-page;
+  border-radius: $radius-md $radius-md 0 0;
+  overflow: hidden;
+}
+
+.tableRow {
+  display: flex;
+  border-bottom: 1rpx solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+    border-radius: 0 0 $radius-md $radius-md;
+  }
+
+  &.altRow {
+    background: rgba($color-primary, 0.02);
+  }
+}
+
+.tableCell {
+  flex: 1;
+  min-width: 120rpx;
+  padding: $spacing-sm $spacing-xs;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  Text {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+  }
+
+  &.firstCell {
+    min-width: 160rpx;
+    text-align: left;
+    justify-content: flex-start;
+    flex-shrink: 0;
+  }
+
+  &.tableHeaderCell {
+    padding: $spacing-md $spacing-xs;
+    border-bottom: 3rpx solid;
+
+    Text {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-bold;
+      color: $color-text-primary;
+    }
+
+    &.firstCell {
+      border-bottom-color: $color-primary;
+
+      Text {
+        color: $color-primary;
+      }
+    }
+  }
+
+  &.labelCell {
+    padding-left: $spacing-md;
+
+    Text {
+      color: $color-text-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.sensitivityBlock {
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sensitivityHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.sensitivityDot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-round;
+}
+
+.sensitivityBuilding {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.sensitivityBar {
+  display: flex;
+  height: 48rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+}
+
+.sensitivitySegment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width $transition-slow;
+  min-width: 0;
+
+  &.whisper {
+    background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+  }
+
+  &.normal {
+    background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
+  }
+
+  &.loud {
+    background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+  }
+
+  &.shout {
+    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+  }
+}
+
+.segmentText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.sensitivityLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.legendMiniItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.legendMiniColor {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-xs;
+
+  &.whisper {
+    background: #10B981;
+  }
+
+  &.normal {
+    background: #0EA5E9;
+  }
+
+  &.loud {
+    background: #F59E0B;
+  }
+
+  &.shout {
+    background: #EF4444;
+  }
+}
+
+.legendMiniText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.adviceSection {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-radius: $radius-lg;
+  border-left: 8rpx solid #F59E0B;
+}
+
+.adviceHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.adviceIcon {
+  font-size: $font-size-xl;
+}
+
+.adviceTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #92400E;
+}
+
+.adviceText {
+  font-size: $font-size-sm;
+  color: #78350F;
+  line-height: 1.7;
+}
+
+.actionButtons {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.secondaryBtn,
+.primaryBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+}
+
+.secondaryBtn {
+  background: $color-bg-card;
+  color: $color-primary;
+  border: 2rpx solid $color-primary;
+
+  &:active {
+    background: rgba($color-primary, 0.05);
+  }
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xxl * 3 0;
+
+  .emptyIcon {
+    font-size: 140rpx;
+    margin-bottom: $spacing-lg;
+    opacity: 0.3;
+  }
+
+  .emptyText {
+    font-size: $font-size-lg;
+    color: $color-text-tertiary;
+    margin-bottom: $spacing-xl;
+  }
+}
+
+.backBtn {
+  @include button-reset;
+  display: inline-flex;
+  height: $button-height-lg;
+  padding: 0 $spacing-xxl;
+  background: $color-primary;
+  color: $color-text-white;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}

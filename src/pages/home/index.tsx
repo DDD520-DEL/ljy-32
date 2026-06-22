@@ -317,6 +317,9 @@ const HomePage: React.FC = () => {
               📈 生成月报
             </Button>
           </View>
+          <Button className={styles.actionBtn + ' ' + styles.compareBtn} onClick={() => Taro.navigateTo({ url: '/pages/compare/index' })}>
+            🏢 楼栋对比
+          </Button>
           <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleManageBuilding}>
             管理楼栋信息
           </Button>

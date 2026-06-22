@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData } from '../types';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 import { generateReport } from '../utils/reportUtils';
@@ -35,6 +35,8 @@ interface DataContextType {
   getRetestReminders: () => RetestReminder[];
   getFloorLastTestTime: (buildingId: string, floor: number) => string | null;
   getReportData: (type: ReportType) => ReportData | null;
+  getBuildingStats: (buildingId: string) => BuildingStats | null;
+  getMultiBuildingStats: (buildingIds: string[]) => BuildingStats[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -352,6 +354,96 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return generateReport(type, building, buildingRecords);
   };
 
+  const calculateBuildingStats = (building: Building, buildingRecords: TestRecord[]): BuildingStats => {
+    const totalTests = buildingRecords.length;
+    const totalFloors = building.totalFloors;
+
+    const testedFloorSet = new Set(buildingRecords.map(r => r.floor));
+    const testedFloors = testedFloorSet.size;
+    const testedFloorsRatio = totalFloors > 0 ? Math.round((testedFloors / totalFloors) * 100) : 0;
+
+    let avgSensitivityScore = 0;
+    let avgTotalScore = 0;
+    let excellentCount = 0;
+    let goodCount = 0;
+    let poorCount = 0;
+    let whisperCount = 0;
+    let normalCount = 0;
+    let loudCount = 0;
+    let shoutCount = 0;
+    let needReplaceCount = 0;
+    let blindSpotCount = 0;
+    let lastTestTime: string | null = null;
+
+    if (totalTests > 0) {
+      const totalSensitivity = buildingRecords.reduce((sum, r) => sum + r.sensitivityScore, 0);
+      const totalScoreSum = buildingRecords.reduce((sum, r) => sum + r.totalScore, 0);
+      avgSensitivityScore = Math.round(totalSensitivity / totalTests);
+      avgTotalScore = Math.round(totalScoreSum / totalTests);
+
+      excellentCount = buildingRecords.filter(r => r.grade === 'excellent').length;
+      goodCount = buildingRecords.filter(r => r.grade === 'good').length;
+      poorCount = buildingRecords.filter(r => r.grade === 'poor').length;
+
+      whisperCount = buildingRecords.filter(r => r.sensitivityLevel === 'whisper').length;
+      normalCount = buildingRecords.filter(r => r.sensitivityLevel === 'normal').length;
+      loudCount = buildingRecords.filter(r => r.sensitivityLevel === 'loud').length;
+      shoutCount = buildingRecords.filter(r => r.sensitivityLevel === 'shout').length;
+
+      needReplaceCount = buildingRecords.filter(r => r.grade === 'poor' || r.sensitivityLevel === 'shout').length;
+      blindSpotCount = buildingRecords.filter(r => r.hasBlindSpot).length;
+
+      const latestRecord = buildingRecords.reduce((latest, record) => {
+        return new Date(record.testTime) > new Date(latest.testTime) ? record : latest;
+      });
+      lastTestTime = latestRecord.testTime;
+    }
+
+    const excellentRatio = totalTests > 0 ? Math.round((excellentCount / totalTests) * 100) : 0;
+    const goodRatio = totalTests > 0 ? Math.round((goodCount / totalTests) * 100) : 0;
+    const poorRatio = totalTests > 0 ? Math.round((poorCount / totalTests) * 100) : 0;
+    const needReplaceRatio = totalTests > 0 ? Math.round((needReplaceCount / totalTests) * 100) : 0;
+
+    return {
+      buildingId: building.id,
+      buildingName: building.name,
+      address: building.address,
+      totalFloors,
+      totalTests,
+      testedFloors,
+      testedFloorsRatio,
+      avgSensitivityScore,
+      avgTotalScore,
+      excellentCount,
+      excellentRatio,
+      goodCount,
+      goodRatio,
+      poorCount,
+      poorRatio,
+      whisperCount,
+      normalCount,
+      loudCount,
+      shoutCount,
+      needReplaceCount,
+      needReplaceRatio,
+      blindSpotCount,
+      lastTestTime
+    };
+  };
+
+  const getBuildingStats = (buildingId: string): BuildingStats | null => {
+    const building = buildings.find(b => b.id === buildingId);
+    if (!building) return null;
+    const buildingRecords = records.filter(r => r.buildingId === buildingId);
+    return calculateBuildingStats(building, buildingRecords);
+  };
+
+  const getMultiBuildingStats = (buildingIds: string[]): BuildingStats[] => {
+    return buildingIds
+      .map(id => getBuildingStats(id))
+      .filter((s): s is BuildingStats => s !== null);
+  };
+
   const getRetestReminders = (): RetestReminder[] => {
     const reminders: RetestReminder[] = [];
     
@@ -424,7 +516,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateBuildingRetestCycle,
         getRetestReminders,
         getFloorLastTestTime,
-        getReportData
+        getReportData,
+        getBuildingStats,
+        getMultiBuildingStats
       }}
     >
       {children}
