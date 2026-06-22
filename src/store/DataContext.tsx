@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, BrandRankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights } from '../types';
+import type { Building, TestRecord, RankItem, BrandRankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights, UserContributionStats } from '../types';
 import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG, UNKNOWN_BRAND } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
@@ -32,6 +32,8 @@ interface DataContextType {
   generateInvitation: () => InvitationCode | null;
   joinByCode: (code: string) => { success: boolean; reason?: string; buildingId?: string };
   setCurrentUserName: (name: string) => void;
+  setCurrentUserAvatar: (avatar: string) => void;
+  getUserContributionStats: () => UserContributionStats;
   getParticipants: (buildingId: string) => NeighborUser[];
   getRecordsByFloor: (buildingId: string, floor: number) => TestRecord[];
   getRepairRecordsByBuilding: (buildingId: string) => RepairRecord[];
@@ -405,6 +407,53 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentUser(user);
   };
 
+  const setCurrentUserAvatar = (avatar: string) => {
+    const user = neighborStorage.updateUserAvatar(avatar);
+    setCurrentUser(user);
+  };
+
+  const getUserContributionStats = (): UserContributionStats => {
+    const user = currentUser || neighborStorage.ensureCurrentUser();
+    const userId = user.id;
+
+    const userRecords = records.filter(r => r.testerId === userId);
+    const totalTests = userRecords.length;
+
+    const coveredFloorSet = new Set<string>();
+    const problemFloorSet = new Set<string>();
+    const buildingMap = new Map<string, { buildingId: string; buildingName: string; totalFloors: number; address: string; testCount: number }>();
+
+    userRecords.forEach(record => {
+      const floorKey = `${record.buildingId}-${record.floor}`;
+      coveredFloorSet.add(floorKey);
+
+      const recordGrade = calculateRecordScore(record).grade;
+      if (recordGrade === 'poor' || record.hasBlindSpot) {
+        problemFloorSet.add(floorKey);
+      }
+
+      if (!buildingMap.has(record.buildingId)) {
+        const building = buildings.find(b => b.id === record.buildingId);
+        buildingMap.set(record.buildingId, {
+          buildingId: record.buildingId,
+          buildingName: building?.name || record.buildingName,
+          totalFloors: building?.totalFloors || 0,
+          address: building?.address || '',
+          testCount: 0
+        });
+      }
+      const buildingData = buildingMap.get(record.buildingId)!;
+      buildingData.testCount++;
+    });
+
+    return {
+      totalTests,
+      coveredFloors: coveredFloorSet.size,
+      problemFloors: problemFloorSet.size,
+      buildingsParticipated: Array.from(buildingMap.values())
+    };
+  };
+
   const getParticipants = (buildingId: string): NeighborUser[] => {
     return neighborStorage.getParticipantsByBuilding(buildingId);
   };
@@ -756,6 +805,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         generateInvitation,
         joinByCode,
         setCurrentUserName,
+        setCurrentUserAvatar,
+        getUserContributionStats,
         getParticipants,
         getRecordsByFloor,
         getRepairRecordsByBuilding,

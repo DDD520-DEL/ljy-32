@@ -202,6 +202,13 @@ export const neighborStorage = {
     return updated;
   },
 
+  updateUserAvatar(avatar: string): NeighborUser {
+    const user = this.ensureCurrentUser();
+    const updated: NeighborUser = { ...user, avatar };
+    this.saveCurrentUser(updated);
+    return updated;
+  },
+
   getCollaborations(): CollaborationSession[] {
     try {
       const data = Taro.getStorageSync(COLLABORATION_KEY);

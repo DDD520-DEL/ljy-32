@@ -109,6 +109,19 @@ export interface NeighborUser {
   joinTime: string;
 }
 
+export interface UserContributionStats {
+  totalTests: number;
+  coveredFloors: number;
+  problemFloors: number;
+  buildingsParticipated: Array<{
+    buildingId: string;
+    buildingName: string;
+    totalFloors: number;
+    address: string;
+    testCount: number;
+  }>;
+}
+
 export interface InvitationCode {
   code: string;
   buildingId: string;

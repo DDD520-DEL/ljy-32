@@ -5,6 +5,7 @@ export default defineAppConfig({
     'pages/rank/index',
     'pages/collaborate/index',
     'pages/share/index',
+    'pages/profile/index',
     'pages/detail/index',
     'pages/repair/index',
     'pages/report/index',
@@ -41,8 +42,8 @@ export default defineAppConfig({
         text: '邻里协作'
       },
       {
-        pagePath: 'pages/share/index',
-        text: '投诉分享'
+        pagePath: 'pages/profile/index',
+        text: '个人中心'
       }
     ]
   }

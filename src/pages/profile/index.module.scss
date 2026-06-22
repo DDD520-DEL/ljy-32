@@ -1,0 +1,427 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding-bottom: $spacing-xl;
+  background: linear-gradient(180deg, rgba($color-primary, 0.1) 0%, $color-bg-page 40%);
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xxl $page-padding $spacing-xl;
+  margin-bottom: $spacing-lg;
+  border-bottom-left-radius: $radius-xxl;
+  border-bottom-right-radius: $radius-xxl;
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.avatarWrapper {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: rgba($color-text-white, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 6rpx solid rgba($color-text-white, 0.5);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+  margin-bottom: $spacing-sm;
+}
+
+.avatarEmoji {
+  font-size: 96rpx;
+}
+
+.avatarEditHint {
+  background: rgba($color-text-white, 0.2);
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-round;
+}
+
+.editHintText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+}
+
+.nameSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nameDisplayRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.userName {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.editIcon {
+  font-size: $font-size-md;
+  opacity: 0.8;
+}
+
+.joinTime {
+  font-size: $font-size-xs;
+  color: rgba($color-text-white, 0.8);
+  margin-top: $spacing-xs;
+}
+
+.nameEditRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: $spacing-md;
+}
+
+.nameInput {
+  width: 80%;
+  height: 80rpx;
+  padding: 0 $spacing-lg;
+  background: $color-text-white;
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  color: $color-text-primary;
+  text-align: center;
+}
+
+.nameActions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.nameBtn {
+  @include button-reset;
+  height: 64rpx;
+  padding: 0 $spacing-xl;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+}
+
+.cancelBtn {
+  background: rgba($color-text-white, 0.25);
+  color: $color-text-white;
+}
+
+.saveBtn {
+  background: $color-text-white;
+  color: $color-primary;
+}
+
+.buildingSection {
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-xl;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.sectionSubtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.buildingList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.buildingCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.buildingInfo {
+  flex: 1;
+}
+
+.buildingName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.buildingAddress {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.buildingMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.buildingStats {
+  text-align: center;
+  padding: $spacing-sm $spacing-md;
+  background: linear-gradient(135deg, rgba($color-primary, 0.1) 0%, rgba($color-primary-light, 0.1) 100%);
+  border-radius: $radius-md;
+  min-width: 120rpx;
+}
+
+.buildingTestCount {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  display: block;
+  line-height: 1.2;
+}
+
+.buildingTestLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: block;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-xxl;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+.emptyIcon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.emptyHint {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.statsSection {
+  padding: 0 $page-padding;
+}
+
+.statsGrid {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.statItem {
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg $spacing-sm;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.statIcon {
+  font-size: 48rpx;
+  margin-bottom: $spacing-sm;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  margin-bottom: $spacing-xs;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.statTests {
+  .statValue {
+    color: $color-primary;
+  }
+}
+
+.statFloors {
+  .statValue {
+    color: $color-info;
+  }
+}
+
+.statProblems {
+  .statValue {
+    color: $color-warning;
+  }
+}
+
+.statsSummary {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.summaryBar {
+  display: flex;
+  height: 20rpx;
+  border-radius: 10rpx;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+  background: $color-bg-hover;
+}
+
+.summaryCovered {
+  background: linear-gradient(90deg, $color-success 0%, #34D399 100%);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.summaryProblem {
+  background: linear-gradient(90deg, $color-warning 0%, #FBBF24 100%);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.summaryLegend {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-xl;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.legendDot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+}
+
+.legendCovered {
+  background: $color-success;
+}
+
+.legendProblem {
+  background: $color-warning;
+}
+
+.legendText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-lg;
+}
+
+.avatarPicker {
+  width: 100%;
+  max-width: 640rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+}
+
+.pickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-border;
+}
+
+.pickerTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.pickerClose {
+  font-size: $font-size-xxl;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+  line-height: 1;
+}
+
+.avatarGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  justify-content: center;
+}
+
+.avatarOption {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: $color-bg-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid transparent;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.avatarActive {
+    border-color: $color-primary;
+    background: rgba($color-primary, 0.1);
+  }
+}
+
+.avatarOptionEmoji {
+  font-size: 64rpx;
+}
