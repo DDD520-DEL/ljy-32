@@ -23,7 +23,12 @@ const HomePage: React.FC = () => {
     getRetestReminders,
     scoreWeights,
     updateScoreWeights,
-    calculateRecordScore
+    calculateRecordScore,
+    exportToJSON,
+    exportToText,
+    exportToCSV,
+    importData,
+    getBackupStats
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
@@ -35,10 +40,13 @@ const HomePage: React.FC = () => {
   const [showRetestModal, setShowRetestModal] = useState(false);
   const [showCycleSettingModal, setShowCycleSettingModal] = useState(false);
   const [showWeightSettingModal, setShowWeightSettingModal] = useState(false);
+  const [showDataManageModal, setShowDataManageModal] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<RetestCycle>('two_weeks');
   const [customDays, setCustomDays] = useState('');
   const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
   const [tempSensitivityWeight, setTempSensitivityWeight] = useState(scoreWeights.sensitivityWeight);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const activeReminders = useMemo(() => {
     const handledIds = getAllHandledReminderIds();
@@ -300,6 +308,75 @@ const HomePage: React.FC = () => {
     });
   };
 
+  const handleExportJSON = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const success = await exportToJSON();
+      if (success) {
+        Taro.showToast({ title: '导出成功', icon: 'success' });
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportText = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const success = await exportToText();
+      if (success) {
+        Taro.showToast({ title: '导出成功', icon: 'success' });
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const success = await exportToCSV();
+      if (success) {
+        Taro.showToast({ title: '导出成功', icon: 'success' });
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (isImporting) return;
+
+    Taro.showModal({
+      title: '确认恢复数据',
+      content: '恢复数据将覆盖当前所有数据，确定要继续吗？',
+      confirmText: '确定恢复',
+      confirmColor: '#EF4444',
+      success: async (res) => {
+        if (res.confirm) {
+          setIsImporting(true);
+          try {
+            const result = await importData();
+            if (result.success) {
+              Taro.showToast({ title: result.message, icon: 'success' });
+              setShowDataManageModal(false);
+              forceUpdate(prev => prev + 1);
+            } else {
+              Taro.showToast({ title: result.message, icon: 'none' });
+            }
+          } finally {
+            setIsImporting(false);
+          }
+        }
+      }
+    });
+  };
+
+  const backupStats = getBackupStats();
+
   return (
     <ScrollView className={styles.container} scrollY>
       <View className={styles.header}>
@@ -371,6 +448,9 @@ const HomePage: React.FC = () => {
               邀请邻居协作
             </Button>
           </View>
+          <Button className={styles.actionBtn + ' ' + styles.dataManageBtn} onClick={() => setShowDataManageModal(true)}>
+            💾 数据管理（导出/备份恢复）
+          </Button>
         </View>
       </View>
 
@@ -567,6 +647,91 @@ const HomePage: React.FC = () => {
               <Button className={styles.confirmBtn} onClick={handleSaveWeights}>
                 保存设置
               </Button>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showDataManageModal && (
+        <View className={styles.modalOverlay} onClick={() => setShowDataManageModal(false)}>
+          <View className={styles.dataManageModal} onClick={e => e.stopPropagation()}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>💾 数据管理</Text>
+              <Text className={styles.closeBtn} onClick={() => setShowDataManageModal(false)}>×</Text>
+            </View>
+
+            <View className={styles.dataStats}>
+              <Text className={styles.dataStatsTitle}>当前数据概览</Text>
+              <View className={styles.dataStatsGrid}>
+                <View className={styles.dataStatItem}>
+                  <Text className={styles.dataStatValue}>{backupStats.buildingCount}</Text>
+                  <Text className={styles.dataStatLabel}>楼栋</Text>
+                </View>
+                <View className={styles.dataStatItem}>
+                  <Text className={styles.dataStatValue}>{backupStats.recordCount}</Text>
+                  <Text className={styles.dataStatLabel}>测试记录</Text>
+                </View>
+                <View className={styles.dataStatItem}>
+                  <Text className={styles.dataStatValue}>{backupStats.repairCount}</Text>
+                  <Text className={styles.dataStatLabel}>维修记录</Text>
+                </View>
+                <View className={styles.dataStatItem}>
+                  <Text className={styles.dataStatValue}>{backupStats.complaintCount}</Text>
+                  <Text className={styles.dataStatLabel}>投诉记录</Text>
+                </View>
+              </View>
+            </View>
+
+            <View className={styles.dataSection}>
+              <Text className={styles.dataSectionTitle}>📤 导出数据</Text>
+              <Text className={styles.dataSectionDesc}>
+                导出全部数据保存到手机，换手机或误删数据时可快速恢复。
+              </Text>
+              <View className={styles.exportButtons}>
+                <Button
+                  className={styles.exportBtn + ' ' + styles.exportJsonBtn}
+                  onClick={handleExportJSON}
+                  disabled={isExporting}
+                >
+                  JSON 备份文件
+                </Button>
+                <Button
+                  className={styles.exportBtn + ' ' + styles.exportTextBtn}
+                  onClick={handleExportText}
+                  disabled={isExporting}
+                >
+                  可读文本报告
+                </Button>
+                <Button
+                  className={styles.exportBtn + ' ' + styles.exportCsvBtn}
+                  onClick={handleExportCSV}
+                  disabled={isExporting}
+                >
+                  CSV 表格数据
+                </Button>
+              </View>
+              <View className={styles.exportTips}>
+                <Text className={styles.tipText}>💡 JSON：用于数据备份恢复</Text>
+                <Text className={styles.tipText}>💡 文本：直接可读，便于查看</Text>
+                <Text className={styles.tipText}>💡 CSV：可用 Excel 打开分析</Text>
+              </View>
+            </View>
+
+            <View className={styles.dataSection}>
+              <Text className={styles.dataSectionTitle}>📥 恢复数据</Text>
+              <Text className={styles.dataSectionDesc}>
+                从备份文件恢复数据，将覆盖当前所有数据。
+              </Text>
+              <Button
+                className={styles.importBtn}
+                onClick={handleImport}
+                disabled={isImporting}
+              >
+                {isImporting ? '恢复中...' : '选择备份文件恢复'}
+              </Button>
+              <Text className={styles.importWarning}>
+                ⚠️ 恢复数据会覆盖当前所有数据，请谨慎操作！
+              </Text>
             </View>
           </View>
         </View>

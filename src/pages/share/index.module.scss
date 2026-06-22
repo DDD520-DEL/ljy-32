@@ -364,3 +364,193 @@
 .timelineSection {
   margin-top: $spacing-xl;
 }
+
+.dataManageBtn {
+  background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+  color: $color-text-white;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-lg;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-border;
+}
+
+.modalTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.closeBtn {
+  font-size: $font-size-xxl;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+  line-height: 1;
+}
+
+.dataManageModal {
+  width: 100%;
+  max-width: 680rpx;
+  max-height: 85vh;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  overflow-y: auto;
+}
+
+.dataStats {
+  background: linear-gradient(135deg, rgba($color-primary, 0.08) 0%, rgba($color-success, 0.08) 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.dataStatsTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.dataStatsGrid {
+  display: flex;
+  justify-content: space-around;
+}
+
+.dataStatItem {
+  text-align: center;
+}
+
+.dataStatValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.dataStatLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.dataSection {
+  margin-bottom: $spacing-xl;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.dataSectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.dataSectionDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-md;
+  line-height: 1.6;
+}
+
+.exportButtons {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.exportBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.exportJsonBtn {
+  background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+}
+
+.exportTextBtn {
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.exportCsvBtn {
+  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+}
+
+.exportTips {
+  margin-top: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.tipText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  line-height: 2;
+  display: block;
+}
+
+.importBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: $color-error;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.importWarning {
+  font-size: $font-size-xs;
+  color: $color-error;
+  margin-top: $spacing-sm;
+  text-align: center;
+  display: block;
+}

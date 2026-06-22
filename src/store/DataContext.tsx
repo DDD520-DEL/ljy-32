@@ -4,6 +4,8 @@ import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG, UNKNOWN_BRAND } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 import { generateReport } from '../utils/reportUtils';
+import { backupUtils, saveFileToDevice, readFileFromDevice } from '../utils/backupUtils';
+import type { BackupData } from '../utils/backupUtils';
 
 interface DataContextType {
   buildings: Building[];
@@ -48,6 +50,12 @@ interface DataContextType {
   updateComplaintStatus: (id: string, status: ComplaintStatus) => void;
   updateComplaintFeedback: (id: string, feedback: PropertyFeedback) => void;
   deleteComplaintRecord: (id: string) => void;
+  exportData: () => BackupData;
+  exportToJSON: () => Promise<boolean>;
+  exportToText: () => Promise<boolean>;
+  exportToCSV: () => Promise<boolean>;
+  importData: () => Promise<{ success: boolean; message: string }>;
+  getBackupStats: () => { buildingCount: number; recordCount: number; repairCount: number; complaintCount: number };
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -627,6 +635,89 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setComplaintRecords(updated);
   };
 
+  const exportData = (): BackupData => {
+    return backupUtils.exportAllData();
+  };
+
+  const exportToJSON = async (): Promise<boolean> => {
+    try {
+      const data = backupUtils.exportAllData();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const fileName = `声控灯数据备份_${new Date().toISOString().slice(0, 10)}.json`;
+      return await saveFileToDevice(jsonStr, fileName, 'json');
+    } catch (e) {
+      console.error('[DataContext] exportToJSON error:', e);
+      return false;
+    }
+  };
+
+  const exportToText = async (): Promise<boolean> => {
+    try {
+      const data = backupUtils.exportAllData();
+      const text = backupUtils.generateReadableText(data);
+      const fileName = `声控灯数据报告_${new Date().toISOString().slice(0, 10)}.txt`;
+      return await saveFileToDevice(text, fileName, 'text');
+    } catch (e) {
+      console.error('[DataContext] exportToText error:', e);
+      return false;
+    }
+  };
+
+  const exportToCSV = async (): Promise<boolean> => {
+    try {
+      const data = backupUtils.exportAllData();
+      const csv = backupUtils.generateFullCSV(data);
+      const fileName = `声控灯数据表格_${new Date().toISOString().slice(0, 10)}.csv`;
+      return await saveFileToDevice(csv, fileName, 'csv');
+    } catch (e) {
+      console.error('[DataContext] exportToCSV error:', e);
+      return false;
+    }
+  };
+
+  const importData = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const content = await readFileFromDevice();
+      if (!content) {
+        return { success: false, message: '未选择文件' };
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(content);
+      } catch (e) {
+        return { success: false, message: '文件格式错误，请选择 JSON 格式的备份文件' };
+      }
+
+      if (!backupUtils.validateBackupData(data)) {
+        return { success: false, message: '无效的备份文件格式' };
+      }
+
+      const result = backupUtils.importAllData(data);
+      if (result.success) {
+        setBuildings(storage.getBuildings());
+        setRecords(storage.getRecords());
+        setRepairRecords(storage.getRepairRecords());
+        setComplaintRecords(storage.getComplaintRecords());
+        setScoreWeights(storage.getScoreWeights());
+        setCurrentBuildingId(storage.getCurrentBuildingId());
+      }
+      return result;
+    } catch (e) {
+      console.error('[DataContext] importData error:', e);
+      return { success: false, message: '导入失败：' + (e as Error).message };
+    }
+  };
+
+  const getBackupStats = () => {
+    return {
+      buildingCount: buildings.length,
+      recordCount: records.length,
+      repairCount: repairRecords.length,
+      complaintCount: complaintRecords.length
+    };
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -671,7 +762,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addComplaintRecord,
         updateComplaintStatus,
         updateComplaintFeedback,
-        deleteComplaintRecord
+        deleteComplaintRecord,
+        exportData,
+        exportToJSON,
+        exportToText,
+        exportToCSV,
+        importData,
+        getBackupStats
       }}
     >
       {children}
