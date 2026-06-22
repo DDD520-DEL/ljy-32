@@ -42,8 +42,8 @@ export default defineAppConfig({
         text: '邻里协作'
       },
       {
-        pagePath: 'pages/profile/index',
-        text: '个人中心'
+        pagePath: 'pages/share/index',
+        text: '投诉分享'
       }
     ]
   }

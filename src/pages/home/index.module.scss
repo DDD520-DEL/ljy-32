@@ -10,6 +10,36 @@
   margin-bottom: $spacing-xl;
 }
 
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.headerText {
+  flex: 1;
+}
+
+.profileEntry {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba($color-text-white, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+}
+
+.profileAvatar {
+  font-size: 40rpx;
+}
+
 .title {
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;

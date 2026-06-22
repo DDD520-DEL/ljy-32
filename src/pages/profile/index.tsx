@@ -183,19 +183,19 @@ const ProfilePage: React.FC = () => {
           </View>
         </View>
 
-        {stats.totalTests > 0 && (
+        {stats.coveredFloors > 0 && (
           <View className={styles.statsSummary}>
             <View className={styles.summaryBar}>
               <View
                 className={styles.summaryCovered}
                 style={{
-                  width: `${stats.coveredFloors > 0 ? Math.max(5, (stats.problemFloors / stats.coveredFloors) * 100) : 0}%`
+                  width: `${stats.coveredFloors > 0 ? Math.max(5, ((stats.coveredFloors - stats.problemFloors) / stats.coveredFloors) * 100) : 0}%`
                 }}
               />
               <View
                 className={styles.summaryProblem}
                 style={{
-                  width: `${stats.coveredFloors > 0 ? Math.max(5, ((stats.coveredFloors - stats.problemFloors) / stats.coveredFloors) * 100) : 0}%`
+                  width: `${stats.coveredFloors > 0 ? Math.max(5, (stats.problemFloors / stats.coveredFloors) * 100) : 0}%`
                 }}
               />
             </View>

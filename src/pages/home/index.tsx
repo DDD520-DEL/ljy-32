@@ -28,7 +28,8 @@ const HomePage: React.FC = () => {
     exportToText,
     exportToCSV,
     importData,
-    getBackupStats
+    getBackupStats,
+    currentUser
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
@@ -85,6 +86,10 @@ const HomePage: React.FC = () => {
     }
     Taro.switchTab({ url: '/pages/record/index' });
   }, [currentBuildingId]);
+
+  const handleGoToProfile = useCallback(() => {
+    Taro.navigateTo({ url: '/pages/profile/index' });
+  }, []);
 
   const handleManageBuilding = useCallback(() => {
     Taro.showActionSheet({
@@ -392,8 +397,17 @@ const HomePage: React.FC = () => {
   return (
     <ScrollView className={styles.container} scrollY>
       <View className={styles.header}>
-        <Text className={styles.title}>楼道声控灯评测</Text>
-        <Text className={styles.subtitle}>记录灵敏度，推动更换老旧声控灯</Text>
+        <View className={styles.headerContent}>
+          <View className={styles.headerText}>
+            <Text className={styles.title}>楼道声控灯评测</Text>
+            <Text className={styles.subtitle}>记录灵敏度，推动更换老旧声控灯</Text>
+          </View>
+          <View className={styles.profileEntry} onClick={handleGoToProfile}>
+            <Text className={styles.profileAvatar}>
+              {currentUser?.avatar || '👤'}
+            </Text>
+          </View>
+        </View>
       </View>
 
       <View className={styles.currentBuilding} onClick={handleManageBuilding}>
