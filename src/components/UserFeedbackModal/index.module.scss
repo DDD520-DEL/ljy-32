@@ -1,0 +1,250 @@
+@use '@/styles/variables.scss' as *;
+
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-lg;
+}
+
+.modal {
+  width: 100%;
+  max-width: 680rpx;
+  max-height: 85vh;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-xl;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-border;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.closeBtn {
+  font-size: $font-size-xxl;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+  line-height: 1;
+}
+
+.body {
+  flex: 1;
+  padding: $spacing-xl;
+  overflow-y: auto;
+}
+
+.formItem {
+  margin-bottom: $spacing-xl;
+}
+
+.label {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.required {
+  color: $color-error;
+}
+
+.typeSelector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.typeOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border: 2rpx solid $color-border;
+  transition: all $transition-base;
+
+  &.active {
+    border-color: $color-primary;
+    background: rgba($color-primary, 0.08);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.typeLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: $spacing-lg;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border: 2rpx solid $color-border;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.charCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: right;
+  margin-top: $spacing-xs;
+  display: block;
+}
+
+.input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 $spacing-lg;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border: 2rpx solid $color-border;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.metaSection {
+  background: linear-gradient(135deg, rgba($color-primary, 0.05) 0%, rgba($color-info, 0.05) 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+}
+
+.metaTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.metaList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.metaItem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.metaLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.metaValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  flex: 1;
+  word-break: break-all;
+}
+
+.footer {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-xl;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-border;
+  flex-shrink: 0;
+}
+
+.cancelBtn,
+.confirmBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+}
+
+.cancelBtn {
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  border: 2rpx solid $color-border;
+}
+
+.confirmBtn {
+  background: $color-primary;
+  color: $color-text-white;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.thanksModal {
+  width: 100%;
+  max-width: 560rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xxl $spacing-xl;
+  text-align: center;
+}
+
+.thanksIcon {
+  font-size: 120rpx;
+  margin-bottom: $spacing-lg;
+}
+
+.thanksTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.thanksDesc {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: $spacing-xxl;
+  display: block;
+}
+
+.thanksBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+}

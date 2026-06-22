@@ -1,6 +1,6 @@
 import Taro from '@tarojs/taro';
-import type { Building, TestRecord, RepairRecord, ComplaintRecord, ScoreWeights } from '../types';
-import { SENSITIVITY_CONFIG, GRADE_CONFIG, REPAIR_STATUS_CONFIG, COMPLAINT_STATUS_CONFIG, RETEST_CYCLE_CONFIG } from '../types';
+import type { Building, TestRecord, RepairRecord, ComplaintRecord, ScoreWeights, UserFeedbackRecord } from '../types';
+import { SENSITIVITY_CONFIG, GRADE_CONFIG, REPAIR_STATUS_CONFIG, COMPLAINT_STATUS_CONFIG, RETEST_CYCLE_CONFIG, FEEDBACK_TYPE_CONFIG } from '../types';
 import { formatDate } from './storage';
 
 export interface BackupData {
@@ -10,6 +10,7 @@ export interface BackupData {
   records: TestRecord[];
   repairRecords: RepairRecord[];
   complaintRecords: ComplaintRecord[];
+  feedbackRecords: UserFeedbackRecord[];
   scoreWeights: ScoreWeights;
 }
 
@@ -32,6 +33,7 @@ export const backupUtils = {
       const records = Taro.getStorageSync('light_evaluator_records');
       const repairRecords = Taro.getStorageSync('light_evaluator_repair_records');
       const complaintRecords = Taro.getStorageSync('light_evaluator_complaint_records');
+      const feedbackRecords = Taro.getStorageSync('light_evaluator_feedback_records');
       const scoreWeights = Taro.getStorageSync('light_evaluator_score_weights');
 
       return {
@@ -41,6 +43,7 @@ export const backupUtils = {
         records: records ? JSON.parse(records) : [],
         repairRecords: repairRecords ? JSON.parse(repairRecords) : [],
         complaintRecords: complaintRecords ? JSON.parse(complaintRecords) : [],
+        feedbackRecords: feedbackRecords ? JSON.parse(feedbackRecords) : [],
         scoreWeights: scoreWeights ? JSON.parse(scoreWeights) : { sensitivityWeight: 50, durationWeight: 50 }
       };
     } catch (e) {
@@ -67,6 +70,9 @@ export const backupUtils = {
       if (data.complaintRecords && Array.isArray(data.complaintRecords)) {
         Taro.setStorageSync('light_evaluator_complaint_records', JSON.stringify(data.complaintRecords));
       }
+      if (data.feedbackRecords && Array.isArray(data.feedbackRecords)) {
+        Taro.setStorageSync('light_evaluator_feedback_records', JSON.stringify(data.feedbackRecords));
+      }
       if (data.scoreWeights) {
         Taro.setStorageSync('light_evaluator_score_weights', JSON.stringify(data.scoreWeights));
       }
@@ -79,7 +85,7 @@ export const backupUtils = {
   },
 
   generateReadableText(data: BackupData): string {
-    const { buildings, records, repairRecords, complaintRecords } = data;
+    const { buildings, records, repairRecords, complaintRecords, feedbackRecords } = data;
     let text = '';
 
     text += '========================================\n';
@@ -166,6 +172,26 @@ export const backupUtils = {
       text += '\n';
     });
 
+    text += '【意见反馈】\n';
+    text += `共 ${feedbackRecords.length} 条记录\n\n`;
+    const sortedFeedbacks = [...feedbackRecords].sort((a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime());
+    sortedFeedbacks.forEach((f, idx) => {
+      const typeConfig = FEEDBACK_TYPE_CONFIG[f.type];
+      text += `${idx + 1}. ${typeConfig?.label || f.type}\n`;
+      text += `   提交时间：${formatDate(f.createTime)}\n`;
+      text += `   反馈内容：${f.content}\n`;
+      if (f.contact) {
+        text += `   联系方式：${f.contact}\n`;
+      }
+      if (f.buildingName) {
+        text += `   关联楼栋：${f.buildingName}${f.buildingAddress ? ' (' + f.buildingAddress + ')' : ''}\n`;
+      }
+      text += `   手机型号：${f.phoneModel}\n`;
+      text += `   系统信息：${f.osInfo}\n`;
+      text += `   应用版本：${f.appVersion}\n`;
+      text += '\n';
+    });
+
     text += '========================================\n';
     text += '  报告结束\n';
     text += '========================================\n';
@@ -173,8 +199,8 @@ export const backupUtils = {
     return text;
   },
 
-  generateCSV(data: BackupData): { buildings: string; records: string; repairRecords: string; complaintRecords: string } {
-    const { buildings, records, repairRecords, complaintRecords } = data;
+  generateCSV(data: BackupData): { buildings: string; records: string; repairRecords: string; complaintRecords: string; feedbackRecords: string } {
+    const { buildings, records, repairRecords, complaintRecords, feedbackRecords } = data;
 
     const buildingsCSV = [
       ['楼栋ID', '楼栋名称', '地址', '总楼层', '创建时间', '复测周期', '自定义天数'].map(escapeCSVField).join(','),
@@ -248,11 +274,29 @@ export const backupUtils = {
       ].map(escapeCSVField).join(','))
     ].join('\r\n');
 
+    const feedbackRecordsCSV = [
+      ['记录ID', '反馈类型', '反馈内容', '联系方式', '楼栋ID', '楼栋名称', '楼栋地址', '手机型号', '系统信息', '应用版本', '提交时间'].map(escapeCSVField).join(','),
+      ...feedbackRecords.map(f => [
+        f.id,
+        f.type,
+        f.content,
+        f.contact || '',
+        f.buildingId || '',
+        f.buildingName || '',
+        f.buildingAddress || '',
+        f.phoneModel,
+        f.osInfo,
+        f.appVersion,
+        f.createTime
+      ].map(escapeCSVField).join(','))
+    ].join('\r\n');
+
     return {
       buildings: buildingsCSV,
       records: recordsCSV,
       repairRecords: repairRecordsCSV,
-      complaintRecords: complaintRecordsCSV
+      complaintRecords: complaintRecordsCSV,
+      feedbackRecords: feedbackRecordsCSV
     };
   },
 
@@ -262,7 +306,8 @@ export const backupUtils = {
     full += csv.buildings + '\r\n\r\n';
     full += csv.records + '\r\n\r\n';
     full += csv.repairRecords + '\r\n\r\n';
-    full += csv.complaintRecords + '\r\n';
+    full += csv.complaintRecords + '\r\n\r\n';
+    full += csv.feedbackRecords + '\r\n';
     return full;
   },
 
@@ -271,6 +316,7 @@ export const backupUtils = {
     recordCount: number;
     repairCount: number;
     complaintCount: number;
+    feedbackCount: number;
     exportTime: string;
   } {
     return {
@@ -278,6 +324,7 @@ export const backupUtils = {
       recordCount: data.records.length,
       repairCount: data.repairRecords.length,
       complaintCount: data.complaintRecords.length,
+      feedbackCount: data.feedbackRecords?.length || 0,
       exportTime: formatDate(data.exportTime)
     };
   },
@@ -339,7 +386,8 @@ export const saveCSVFilesToDevice = async (data: BackupData): Promise<boolean> =
       { name: `声控灯_楼栋信息_${dateStr}.csv`, content: CSV_BOM + csvData.buildings },
       { name: `声控灯_测试记录_${dateStr}.csv`, content: CSV_BOM + csvData.records },
       { name: `声控灯_维修记录_${dateStr}.csv`, content: CSV_BOM + csvData.repairRecords },
-      { name: `声控灯_投诉记录_${dateStr}.csv`, content: CSV_BOM + csvData.complaintRecords }
+      { name: `声控灯_投诉记录_${dateStr}.csv`, content: CSV_BOM + csvData.complaintRecords },
+      { name: `声控灯_意见反馈_${dateStr}.csv`, content: CSV_BOM + csvData.feedbackRecords }
     ];
 
     for (const file of files) {

@@ -425,3 +425,25 @@
 .avatarOptionEmoji {
   font-size: 64rpx;
 }
+
+.feedbackSection {
+  padding: 0 $page-padding;
+  margin-top: $spacing-xl;
+}
+
+.feedbackBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%);
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}

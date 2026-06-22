@@ -1,5 +1,5 @@
 import Taro from '@tarojs/taro';
-import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights } from '../types';
+import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights, UserFeedbackRecord } from '../types';
 import { RETEST_CYCLE_CONFIG, DEFAULT_SCORE_WEIGHTS } from '../types';
 
 const BUILDINGS_KEY = 'light_evaluator_buildings';
@@ -8,6 +8,7 @@ const CURRENT_BUILDING_KEY = 'light_evaluator_current_building';
 const REPAIR_RECORDS_KEY = 'light_evaluator_repair_records';
 const COMPLAINT_RECORDS_KEY = 'light_evaluator_complaint_records';
 const SCORE_WEIGHTS_KEY = 'light_evaluator_score_weights';
+const FEEDBACK_RECORDS_KEY = 'light_evaluator_feedback_records';
 
 export const storage = {
   getBuildings(): Building[] {
@@ -324,6 +325,35 @@ export const storage = {
     } catch (e) {
       console.error('[Storage] saveScoreWeights error:', e);
     }
+  },
+
+  getFeedbackRecords(): UserFeedbackRecord[] {
+    try {
+      const data = Taro.getStorageSync(FEEDBACK_RECORDS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('[Storage] getFeedbackRecords error:', e);
+      return [];
+    }
+  },
+
+  saveFeedbackRecords(records: UserFeedbackRecord[]): void {
+    try {
+      Taro.setStorageSync(FEEDBACK_RECORDS_KEY, JSON.stringify(records));
+    } catch (e) {
+      console.error('[Storage] saveFeedbackRecords error:', e);
+    }
+  },
+
+  addFeedbackRecord(record: Omit<UserFeedbackRecord, 'id'>): UserFeedbackRecord[] {
+    const records = this.getFeedbackRecords();
+    const newRecord: UserFeedbackRecord = {
+      ...record,
+      id: generateId()
+    };
+    records.push(newRecord);
+    this.saveFeedbackRecords(records);
+    return records;
   }
 };
 

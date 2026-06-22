@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Image, Input, Button } from '@tarojs/components
 import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
+import UserFeedbackModal from '../../components/UserFeedbackModal';
 import type { UserContributionStats } from '../../types';
 
 const DEFAULT_AVATAR_LIST = [
@@ -32,6 +33,7 @@ const ProfilePage: React.FC = () => {
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const stats: UserContributionStats = getUserContributionStats();
 
@@ -213,6 +215,12 @@ const ProfilePage: React.FC = () => {
         )}
       </View>
 
+      <View className={styles.feedbackSection}>
+        <Button className={styles.feedbackBtn} onClick={() => setShowFeedbackModal(true)}>
+          💬 意见反馈
+        </Button>
+      </View>
+
       {showAvatarPicker && (
         <View className={styles.modalOverlay} onClick={() => setShowAvatarPicker(false)}>
           <View className={styles.avatarPicker} onClick={e => e.stopPropagation()}>
@@ -236,6 +244,11 @@ const ProfilePage: React.FC = () => {
           </View>
         </View>
       )}
+
+      <UserFeedbackModal
+        visible={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </ScrollView>
   );
 };

@@ -4,6 +4,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
 import RankCard from '../../components/RankCard';
+import UserFeedbackModal from '../../components/UserFeedbackModal';
 import type { RetestReminder, RetestCycle, ScoreWeights } from '../../types';
 import { RETEST_CYCLE_CONFIG, DEFAULT_SCORE_WEIGHTS } from '../../types';
 import { formatDate } from '../../utils/storage';
@@ -42,6 +43,7 @@ const HomePage: React.FC = () => {
   const [showCycleSettingModal, setShowCycleSettingModal] = useState(false);
   const [showWeightSettingModal, setShowWeightSettingModal] = useState(false);
   const [showDataManageModal, setShowDataManageModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<RetestCycle>('two_weeks');
   const [customDays, setCustomDays] = useState('');
   const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
@@ -484,6 +486,9 @@ const HomePage: React.FC = () => {
           <Button className={styles.actionBtn + ' ' + styles.knowledgeBtn} onClick={handleGoToKnowledge}>
             📚 声控灯小知识科普
           </Button>
+          <Button className={styles.actionBtn + ' ' + styles.feedbackBtn} onClick={() => setShowFeedbackModal(true)}>
+            💬 意见反馈
+          </Button>
         </View>
       </View>
 
@@ -769,6 +774,11 @@ const HomePage: React.FC = () => {
           </View>
         </View>
       )}
+
+      <UserFeedbackModal
+        visible={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </ScrollView>
   );
 };

@@ -607,6 +607,11 @@
   color: $color-text-white;
 }
 
+.feedbackBtn {
+  background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%);
+  color: $color-text-white;
+}
+
 .dataManageModal {
   width: 100%;
   max-width: 680rpx;

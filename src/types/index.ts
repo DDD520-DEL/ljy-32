@@ -370,3 +370,26 @@ export const COMMON_LIGHT_BRANDS = [
 ];
 
 export const UNKNOWN_BRAND = '未知品牌';
+
+export type FeedbackType = 'suggestion' | 'bug' | 'question' | 'other';
+
+export const FEEDBACK_TYPE_CONFIG: Record<FeedbackType, { label: string; icon: string }> = {
+  suggestion: { label: '功能建议', icon: '💡' },
+  bug: { label: '问题反馈', icon: '🐛' },
+  question: { label: '使用疑问', icon: '❓' },
+  other: { label: '其他', icon: '📝' }
+};
+
+export interface UserFeedbackRecord {
+  id: string;
+  type: FeedbackType;
+  content: string;
+  contact?: string;
+  buildingId?: string;
+  buildingName?: string;
+  buildingAddress?: string;
+  phoneModel: string;
+  osInfo: string;
+  appVersion: string;
+  createTime: string;
+}

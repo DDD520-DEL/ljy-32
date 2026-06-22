@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, BrandRankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights, UserContributionStats } from '../types';
+import type { Building, TestRecord, RankItem, BrandRankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights, UserContributionStats, UserFeedbackRecord } from '../types';
 import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG, UNKNOWN_BRAND } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
@@ -12,6 +12,7 @@ interface DataContextType {
   records: TestRecord[];
   repairRecords: RepairRecord[];
   complaintRecords: ComplaintRecord[];
+  feedbackRecords: UserFeedbackRecord[];
   currentBuildingId: string;
   currentUser: NeighborUser | null;
   collaborations: CollaborationSession[];
@@ -52,6 +53,7 @@ interface DataContextType {
   updateComplaintStatus: (id: string, status: ComplaintStatus) => void;
   updateComplaintFeedback: (id: string, feedback: PropertyFeedback) => void;
   deleteComplaintRecord: (id: string) => void;
+  addFeedbackRecord: (record: Omit<UserFeedbackRecord, 'id' | 'createTime'>) => void;
   exportData: () => BackupData;
   exportToJSON: () => Promise<boolean>;
   exportToText: () => Promise<boolean>;
@@ -67,6 +69,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [records, setRecords] = useState<TestRecord[]>([]);
   const [repairRecords, setRepairRecords] = useState<RepairRecord[]>([]);
   const [complaintRecords, setComplaintRecords] = useState<ComplaintRecord[]>([]);
+  const [feedbackRecords, setFeedbackRecords] = useState<UserFeedbackRecord[]>([]);
   const [currentBuildingId, setCurrentBuildingId] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<NeighborUser | null>(null);
   const [collaborations, setCollaborations] = useState<CollaborationSession[]>([]);
@@ -77,6 +80,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setRecords(storage.getRecords());
     setRepairRecords(storage.getRepairRecords());
     setComplaintRecords(storage.getComplaintRecords());
+    setFeedbackRecords(storage.getFeedbackRecords());
     setCurrentBuildingId(storage.getCurrentBuildingId());
     setCurrentUser(neighborStorage.getCurrentUser());
     setCollaborations(neighborStorage.getCollaborations());
@@ -684,6 +688,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setComplaintRecords(updated);
   };
 
+  const addFeedbackRecord = (record: Omit<UserFeedbackRecord, 'id' | 'createTime'>) => {
+    const feedbackData: Omit<UserFeedbackRecord, 'id'> = {
+      ...record,
+      createTime: new Date().toISOString()
+    };
+    const updated = storage.addFeedbackRecord(feedbackData);
+    setFeedbackRecords(updated);
+  };
+
   const exportData = (): BackupData => {
     return backupUtils.exportAllData();
   };
@@ -785,6 +798,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         records,
         repairRecords,
         complaintRecords,
+        feedbackRecords,
         currentBuildingId,
         currentUser,
         collaborations,
@@ -825,6 +839,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateComplaintStatus,
         updateComplaintFeedback,
         deleteComplaintRecord,
+        addFeedbackRecord,
         exportData,
         exportToJSON,
         exportToText,
