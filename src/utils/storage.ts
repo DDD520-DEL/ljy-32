@@ -1,11 +1,12 @@
 import Taro from '@tarojs/taro';
-import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle } from '../types';
+import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle, ComplaintRecord, ComplaintStatus, PropertyFeedback } from '../types';
 import { RETEST_CYCLE_CONFIG } from '../types';
 
 const BUILDINGS_KEY = 'light_evaluator_buildings';
 const RECORDS_KEY = 'light_evaluator_records';
 const CURRENT_BUILDING_KEY = 'light_evaluator_current_building';
 const REPAIR_RECORDS_KEY = 'light_evaluator_repair_records';
+const COMPLAINT_RECORDS_KEY = 'light_evaluator_complaint_records';
 
 export const storage = {
   getBuildings(): Building[] {
@@ -225,6 +226,74 @@ export const storage = {
       });
     }
     this.saveRepairRecords(records);
+    return records;
+  },
+
+  getComplaintRecords(): ComplaintRecord[] {
+    try {
+      const data = Taro.getStorageSync(COMPLAINT_RECORDS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('[Storage] getComplaintRecords error:', e);
+      return [];
+    }
+  },
+
+  saveComplaintRecords(records: ComplaintRecord[]): void {
+    try {
+      Taro.setStorageSync(COMPLAINT_RECORDS_KEY, JSON.stringify(records));
+    } catch (e) {
+      console.error('[Storage] saveComplaintRecords error:', e);
+    }
+  },
+
+  getComplaintRecordsByBuilding(buildingId: string): ComplaintRecord[] {
+    return this.getComplaintRecords()
+      .filter(r => r.buildingId === buildingId)
+      .sort((a, b) => new Date(b.complaintTime).getTime() - new Date(a.complaintTime).getTime());
+  },
+
+  addComplaintRecord(record: Omit<ComplaintRecord, 'id'>): ComplaintRecord[] {
+    const records = this.getComplaintRecords();
+    const newRecord: ComplaintRecord = {
+      ...record,
+      id: generateId()
+    };
+    records.push(newRecord);
+    this.saveComplaintRecords(records);
+    return records;
+  },
+
+  updateComplaintStatus(id: string, status: ComplaintStatus): ComplaintRecord[] {
+    const records = this.getComplaintRecords();
+    const index = records.findIndex(r => r.id === id);
+    if (index > -1) {
+      records[index] = {
+        ...records[index],
+        status
+      };
+      this.saveComplaintRecords(records);
+    }
+    return records;
+  },
+
+  updateComplaintFeedback(id: string, feedback: PropertyFeedback): ComplaintRecord[] {
+    const records = this.getComplaintRecords();
+    const index = records.findIndex(r => r.id === id);
+    if (index > -1) {
+      records[index] = {
+        ...records[index],
+        feedback,
+        status: 'replied'
+      };
+      this.saveComplaintRecords(records);
+    }
+    return records;
+  },
+
+  deleteComplaintRecord(id: string): ComplaintRecord[] {
+    const records = this.getComplaintRecords().filter(r => r.id !== id);
+    this.saveComplaintRecords(records);
     return records;
   }
 };

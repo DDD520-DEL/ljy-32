@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats } from '../types';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 import { generateReport } from '../utils/reportUtils';
@@ -8,6 +8,7 @@ interface DataContextType {
   buildings: Building[];
   records: TestRecord[];
   repairRecords: RepairRecord[];
+  complaintRecords: ComplaintRecord[];
   currentBuildingId: string;
   currentUser: NeighborUser | null;
   collaborations: CollaborationSession[];
@@ -37,6 +38,11 @@ interface DataContextType {
   getReportData: (type: ReportType) => ReportData | null;
   getBuildingStats: (buildingId: string) => BuildingStats | null;
   getMultiBuildingStats: (buildingIds: string[]) => BuildingStats[];
+  getComplaintRecordsByBuilding: (buildingId: string) => ComplaintRecord[];
+  addComplaintRecord: (record: Omit<ComplaintRecord, 'id'>) => void;
+  updateComplaintStatus: (id: string, status: ComplaintStatus) => void;
+  updateComplaintFeedback: (id: string, feedback: PropertyFeedback) => void;
+  deleteComplaintRecord: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -45,6 +51,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [records, setRecords] = useState<TestRecord[]>([]);
   const [repairRecords, setRepairRecords] = useState<RepairRecord[]>([]);
+  const [complaintRecords, setComplaintRecords] = useState<ComplaintRecord[]>([]);
   const [currentBuildingId, setCurrentBuildingId] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<NeighborUser | null>(null);
   const [collaborations, setCollaborations] = useState<CollaborationSession[]>([]);
@@ -53,6 +60,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setBuildings(storage.getBuildings());
     setRecords(storage.getRecords());
     setRepairRecords(storage.getRepairRecords());
+    setComplaintRecords(storage.getComplaintRecords());
     setCurrentBuildingId(storage.getCurrentBuildingId());
     setCurrentUser(neighborStorage.getCurrentUser());
     setCollaborations(neighborStorage.getCollaborations());
@@ -484,12 +492,37 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return reminders;
   };
 
+  const getComplaintRecordsByBuilding = (buildingId: string): ComplaintRecord[] => {
+    return storage.getComplaintRecordsByBuilding(buildingId);
+  };
+
+  const addComplaintRecord = (record: Omit<ComplaintRecord, 'id'>) => {
+    const updated = storage.addComplaintRecord(record);
+    setComplaintRecords(updated);
+  };
+
+  const updateComplaintStatus = (id: string, status: ComplaintStatus) => {
+    const updated = storage.updateComplaintStatus(id, status);
+    setComplaintRecords(updated);
+  };
+
+  const updateComplaintFeedback = (id: string, feedback: PropertyFeedback) => {
+    const updated = storage.updateComplaintFeedback(id, feedback);
+    setComplaintRecords(updated);
+  };
+
+  const deleteComplaintRecord = (id: string) => {
+    const updated = storage.deleteComplaintRecord(id);
+    setComplaintRecords(updated);
+  };
+
   return (
     <DataContext.Provider
       value={{
         buildings,
         records,
         repairRecords,
+        complaintRecords,
         currentBuildingId,
         currentUser,
         collaborations,
@@ -518,7 +551,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         getFloorLastTestTime,
         getReportData,
         getBuildingStats,
-        getMultiBuildingStats
+        getMultiBuildingStats,
+        getComplaintRecordsByBuilding,
+        addComplaintRecord,
+        updateComplaintStatus,
+        updateComplaintFeedback,
+        deleteComplaintRecord
       }}
     >
       {children}

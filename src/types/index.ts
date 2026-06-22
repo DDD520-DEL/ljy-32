@@ -278,3 +278,33 @@ export const COMPARE_METRICS: CompareMetricConfig[] = [
     color: '#0EA5E9'
   }
 ];
+
+export type ComplaintStatus = 'pending' | 'replied' | 'processing' | 'resolved';
+
+export interface PropertyFeedback {
+  replyContent: string;
+  replyTime: string;
+  attitudeScore: number;
+  speedScore: number;
+  overallScore: number;
+  note?: string;
+}
+
+export interface ComplaintRecord {
+  id: string;
+  buildingId: string;
+  buildingName: string;
+  complaintText: string;
+  complaintTime: string;
+  poorFloors: number[];
+  photoCount: number;
+  status: ComplaintStatus;
+  feedback?: PropertyFeedback;
+}
+
+export const COMPLAINT_STATUS_CONFIG: Record<ComplaintStatus, { label: string; color: string; bgColor: string; icon: string }> = {
+  pending: { label: '待回复', color: '#EF4444', bgColor: 'rgba(239, 68, 68, 0.1)', icon: '⏳' },
+  replied: { label: '已回复', color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.1)', icon: '📨' },
+  processing: { label: '处理中', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.1)', icon: '🔧' },
+  resolved: { label: '已解决', color: '#10B981', bgColor: 'rgba(16, 185, 129, 0.1)', icon: '✅' }
+};

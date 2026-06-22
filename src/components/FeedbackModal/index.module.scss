@@ -1,0 +1,206 @@
+@use '@/styles/variables.scss' as *;
+
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $page-padding;
+}
+
+.modal {
+  width: 100%;
+  max-width: 680rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: $spacing-lg $spacing-lg $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.closeBtn {
+  font-size: $font-size-xl;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+}
+
+.body {
+  padding: $spacing-lg;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.formItem {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  border: 2rpx solid transparent;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: 1.6;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.ratingSection {
+  margin-bottom: $spacing-lg;
+}
+
+.ratingItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.ratingLabel {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.stars {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.star {
+  font-size: 48rpx;
+  color: $color-divider;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &.active {
+    color: $color-warning;
+  }
+}
+
+.scoreDisplay {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-warning;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+.overallScore {
+  background: linear-gradient(135deg, rgba($color-warning, 0.1) 0%, rgba($color-primary, 0.1) 100%);
+  padding: $spacing-lg;
+  border-radius: $radius-md;
+  text-align: center;
+  margin-bottom: $spacing-lg;
+}
+
+.overallScoreLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+}
+
+.overallScoreValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-warning;
+}
+
+.footer {
+  padding: $spacing-md $spacing-lg $spacing-lg;
+  border-top: 1rpx solid $color-divider;
+  display: flex;
+  gap: $spacing-md;
+}
+
+.cancelBtn,
+.confirmBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.cancelBtn {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+}
+
+.confirmBtn {
+  background: $color-primary;
+  color: $color-text-white;
+}
+
+.statusSelector {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.statusOption {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  background: $color-bg-page;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.active {
+    background: rgba($color-primary, 0.1);
+    color: $color-primary;
+    border-color: $color-primary;
+  }
+}

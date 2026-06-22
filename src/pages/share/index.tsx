@@ -4,7 +4,9 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
-import { SENSITIVITY_CONFIG, REPAIR_STATUS_CONFIG, RepairStatus } from '../../types';
+import { SENSITIVITY_CONFIG, REPAIR_STATUS_CONFIG, RepairStatus, ComplaintRecord, PropertyFeedback, ComplaintStatus } from '../../types';
+import ComplaintTimeline from '../../components/ComplaintTimeline';
+import FeedbackModal from '../../components/FeedbackModal';
 
 const SharePage: React.FC = () => {
   const {
@@ -15,15 +17,22 @@ const SharePage: React.FC = () => {
     getRepairRecordsByBuilding,
     getRepairRecordByFloor,
     markFloorComplaint,
-    updateRepairStatus
+    updateRepairStatus,
+    getComplaintRecordsByBuilding,
+    addComplaintRecord,
+    updateComplaintFeedback,
+    updateComplaintStatus
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
   const allRecords = getRecordsByCurrentBuilding();
   const rankList = getRankList();
   const repairRecords = currentBuildingId ? getRepairRecordsByBuilding(currentBuildingId) : [];
+  const complaintRecords = currentBuildingId ? getComplaintRecordsByBuilding(currentBuildingId) : [];
 
   const [, forceUpdate] = useState(0);
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [currentComplaintRecord, setCurrentComplaintRecord] = useState<ComplaintRecord | null>(null);
 
   useDidShow(() => {
     console.log('[SharePage] did show');
@@ -141,27 +150,68 @@ const SharePage: React.FC = () => {
       return;
     }
 
-    const allPhotos: string[] = [];
-    poorFloors.forEach(item => {
-      allPhotos.push(...getFloorPhotos(item.floor));
-    });
-
-    if (allPhotos.length > 0) {
-      Taro.showModal({
-        title: '文案已复制',
-        content: `投诉文案已复制到剪贴板。还有${allPhotos.length}张现场照片，保存到相册后可在微信群里一并发送，让物业直观看到问题。是否现在保存照片？`,
-        confirmText: '保存照片',
-        cancelText: '暂不需要',
-        success: async (res) => {
-          if (res.confirm) {
-            await handleSavePhotosToAlbum(allPhotos);
-          }
-        }
+    if (currentBuildingId && currentBuilding) {
+      const allPhotos: string[] = [];
+      poorFloors.forEach(item => {
+        allPhotos.push(...getFloorPhotos(item.floor));
       });
+
+      addComplaintRecord({
+        buildingId: currentBuildingId,
+        buildingName: currentBuilding.name,
+        complaintText: generateComplaintText,
+        complaintTime: new Date().toISOString(),
+        poorFloors: poorFloors.map(f => f.floor),
+        photoCount: allPhotos.length,
+        status: 'pending'
+      });
+
+      if (allPhotos.length > 0) {
+        Taro.showModal({
+          title: '文案已复制',
+          content: `投诉文案已复制到剪贴板，已自动记录本次投诉。还有${allPhotos.length}张现场照片，保存到相册后可在微信群里一并发送，让物业直观看到问题。是否现在保存照片？`,
+          confirmText: '保存照片',
+          cancelText: '暂不需要',
+          success: async (res) => {
+            if (res.confirm) {
+              await handleSavePhotosToAlbum(allPhotos);
+            }
+            forceUpdate(prev => prev + 1);
+          }
+        });
+      } else {
+        Taro.showToast({ title: '已复制并记录投诉', icon: 'success' });
+        forceUpdate(prev => prev + 1);
+      }
     } else {
       Taro.showToast({ title: '已复制到剪贴板', icon: 'success' });
     }
     console.log('[SharePage] 文案已复制');
+  };
+
+  const handleAddFeedback = (record: ComplaintRecord) => {
+    setCurrentComplaintRecord(record);
+    setFeedbackModalVisible(true);
+  };
+
+  const handleFeedbackSubmit = (feedback: PropertyFeedback, status: ComplaintStatus) => {
+    if (!currentComplaintRecord) return;
+    updateComplaintFeedback(currentComplaintRecord.id, feedback);
+    if (status !== 'replied') {
+      updateComplaintStatus(currentComplaintRecord.id, status);
+    }
+    setCurrentComplaintRecord(null);
+    forceUpdate(prev => prev + 1);
+    Taro.showToast({ title: '反馈已保存', icon: 'success' });
+  };
+
+  const handleViewDetail = (record: ComplaintRecord) => {
+    Taro.showModal({
+      title: '投诉详情',
+      content: record.complaintText,
+      showCancel: false,
+      confirmText: '关闭'
+    });
   };
 
   const handleSavePhotosToAlbum = async (photos: string[]) => {
@@ -251,7 +301,8 @@ const SharePage: React.FC = () => {
   };
 
   return (
-    <ScrollView className={styles.container} scrollY>
+    <>
+      <ScrollView className={styles.container} scrollY>
       <View className={styles.header}>
         <Text className={styles.title}>投诉与分享</Text>
         <Text className={styles.subtitle}>
@@ -409,6 +460,14 @@ const SharePage: React.FC = () => {
               5. 持续记录，跟踪物业处理进度
             </Text>
           </View>
+
+          <View className={styles.timelineSection}>
+            <ComplaintTimeline
+              records={complaintRecords}
+              onAddFeedback={handleAddFeedback}
+              onViewDetail={handleViewDetail}
+            />
+          </View>
         </>
       ) : (
         <View className={styles.emptyState}>
@@ -427,7 +486,26 @@ const SharePage: React.FC = () => {
           </View>
         </View>
       )}
+
+      {complaintRecords.length > 0 && (
+        <View className={styles.timelineSection}>
+          <ComplaintTimeline
+            records={complaintRecords}
+            onAddFeedback={handleAddFeedback}
+            onViewDetail={handleViewDetail}
+          />
+        </View>
+      )}
     </ScrollView>
+
+      <FeedbackModal
+        visible={feedbackModalVisible}
+        initialFeedback={currentComplaintRecord?.feedback}
+        initialStatus={currentComplaintRecord?.status}
+        onClose={() => setFeedbackModalVisible(false)}
+        onSubmit={handleFeedbackSubmit}
+      />
+    </>
   );
 };
 

@@ -1,0 +1,223 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.count {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.timeline {
+  position: relative;
+  padding-left: $spacing-xl;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 10rpx;
+    top: 8rpx;
+    bottom: 8rpx;
+    width: 4rpx;
+    background: $color-divider;
+    border-radius: 2rpx;
+  }
+}
+
+.timelineItem {
+  position: relative;
+  padding-bottom: $spacing-lg;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.timelineDot {
+  position: absolute;
+  left: -$spacing-xl - 6rpx;
+  top: 8rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  border: 4rpx solid $color-bg-card;
+  z-index: 1;
+}
+
+.timelineContent {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-sm;
+}
+
+.floorInfo {
+  flex: 1;
+}
+
+.floorNumbers {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.complaintTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+  margin-left: $spacing-sm;
+}
+
+.itemBody {
+  margin-bottom: $spacing-sm;
+}
+
+.complaintText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemMeta {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.feedbackSection {
+  background: rgba($color-success, 0.05);
+  border-radius: $radius-sm;
+  padding: $spacing-sm;
+  margin-top: $spacing-sm;
+}
+
+.feedbackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+}
+
+.feedbackLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-success;
+}
+
+.feedbackTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.feedbackContent {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: $spacing-sm;
+}
+
+.scoreRow {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.scoreItem {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.scoreValue {
+  font-weight: $font-weight-semibold;
+  color: $color-warning;
+}
+
+.itemActions {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+}
+
+.actionBtn {
+  @include button-reset;
+  flex: 1;
+  height: 64rpx;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.primary {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.secondary {
+    background: $color-bg-hover;
+    color: $color-text-secondary;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl 0;
+}
+
+.emptyIcon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-sm;
+  opacity: 0.3;
+}
+
+.emptyText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
