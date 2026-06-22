@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, Button, ScrollView, Input } from '@tarojs/components';
+import { View, Text, Button, ScrollView, Input, Slider } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
 import RankCard from '../../components/RankCard';
-import type { RetestReminder, RetestCycle } from '../../types';
-import { RETEST_CYCLE_CONFIG } from '../../types';
+import type { RetestReminder, RetestCycle, ScoreWeights } from '../../types';
+import { RETEST_CYCLE_CONFIG, DEFAULT_SCORE_WEIGHTS } from '../../types';
 import { formatDate } from '../../utils/storage';
 import { setPendingRetest, markReminderHandled, getAllHandledReminderIds } from '../../utils/retestNavigate';
 
@@ -20,7 +20,10 @@ const HomePage: React.FC = () => {
     addBuilding,
     updateBuilding,
     updateBuildingRetestCycle,
-    getRetestReminders
+    getRetestReminders,
+    scoreWeights,
+    updateScoreWeights,
+    calculateRecordScore
   } = useData();
 
   const currentBuilding = getCurrentBuilding();
@@ -31,9 +34,11 @@ const HomePage: React.FC = () => {
   const [, forceUpdate] = useState(0);
   const [showRetestModal, setShowRetestModal] = useState(false);
   const [showCycleSettingModal, setShowCycleSettingModal] = useState(false);
+  const [showWeightSettingModal, setShowWeightSettingModal] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<RetestCycle>('two_weeks');
   const [customDays, setCustomDays] = useState('');
   const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
+  const [tempSensitivityWeight, setTempSensitivityWeight] = useState(scoreWeights.sensitivityWeight);
 
   const activeReminders = useMemo(() => {
     const handledIds = getAllHandledReminderIds();
@@ -50,11 +55,20 @@ const HomePage: React.FC = () => {
     }
   });
 
-  const stats = {
-    totalTests: records.length,
-    poorCount: records.filter(r => r.grade === 'poor').length,
-    excellentCount: records.filter(r => r.grade === 'excellent').length
-  };
+  const stats = useMemo(() => {
+    let poorCount = 0;
+    let excellentCount = 0;
+    records.forEach(r => {
+      const { grade } = calculateRecordScore(r);
+      if (grade === 'poor') poorCount++;
+      if (grade === 'excellent') excellentCount++;
+    });
+    return {
+      totalTests: records.length,
+      poorCount,
+      excellentCount
+    };
+  }, [records, calculateRecordScore]);
 
   const handleStartTest = useCallback(() => {
     if (!currentBuildingId) {
@@ -66,7 +80,7 @@ const HomePage: React.FC = () => {
 
   const handleManageBuilding = useCallback(() => {
     Taro.showActionSheet({
-      itemList: ['添加楼栋', '切换楼栋', '编辑楼栋信息', '设置复测周期'],
+      itemList: ['添加楼栋', '切换楼栋', '编辑楼栋信息', '设置复测周期', '设置评分权重'],
       success: (res) => {
         if (res.tapIndex === 0) {
           showAddBuildingModal();
@@ -83,7 +97,9 @@ const HomePage: React.FC = () => {
             Taro.showToast({ title: '请先选择楼栋', icon: 'none' });
             return;
           }
-          showCycleSettingModal();
+          openCycleSettingModal();
+        } else if (res.tapIndex === 4) {
+          openWeightSettingModal();
         }
       }
     });
@@ -193,7 +209,7 @@ const HomePage: React.FC = () => {
     });
   };
 
-  const showCycleSettingModal = () => {
+  const openCycleSettingModal = () => {
     const building = getCurrentBuilding();
     if (!building) return;
     setSelectedCycle(building.retestCycle);
@@ -223,6 +239,30 @@ const HomePage: React.FC = () => {
     }
     Taro.showToast({ title: '设置成功', icon: 'success' });
     setShowCycleSettingModal(false);
+    forceUpdate(prev => prev + 1);
+  };
+
+  const openWeightSettingModal = () => {
+    setTempSensitivityWeight(scoreWeights.sensitivityWeight);
+    setShowWeightSettingModal(true);
+  };
+
+  const handleSensitivityWeightChange = (value: number) => {
+    setTempSensitivityWeight(value);
+  };
+
+  const handleResetWeights = () => {
+    setTempSensitivityWeight(DEFAULT_SCORE_WEIGHTS.sensitivityWeight);
+  };
+
+  const handleSaveWeights = () => {
+    const newWeights: ScoreWeights = {
+      sensitivityWeight: tempSensitivityWeight,
+      durationWeight: 100 - tempSensitivityWeight
+    };
+    updateScoreWeights(newWeights);
+    Taro.showToast({ title: '权重已更新', icon: 'success' });
+    setShowWeightSettingModal(false);
     forceUpdate(prev => prev + 1);
   };
 
@@ -323,9 +363,14 @@ const HomePage: React.FC = () => {
           <Button className={styles.actionBtn + ' ' + styles.secondary} onClick={handleManageBuilding}>
             管理楼栋信息
           </Button>
-          <Button className={styles.actionBtn + ' ' + styles.collabBtn} onClick={() => Taro.switchTab({ url: '/pages/collaborate/index' })}>
-            邀请邻居协作
-          </Button>
+          <View className={styles.actionRow}>
+            <Button className={styles.actionBtn + ' ' + styles.rowBtn + ' ' + styles.weightBtn} onClick={openWeightSettingModal}>
+              ⚖️ 评分权重设置
+            </Button>
+            <Button className={styles.actionBtn + ' ' + styles.rowBtn + ' ' + styles.collabBtn} onClick={() => Taro.switchTab({ url: '/pages/collaborate/index' })}>
+              邀请邻居协作
+            </Button>
+          </View>
         </View>
       </View>
 
@@ -417,6 +462,110 @@ const HomePage: React.FC = () => {
               </Button>
               <Button className={styles.confirmBtn} onClick={handleSaveCycle}>
                 确定
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showWeightSettingModal && (
+        <View className={styles.modalOverlay} onClick={() => setShowWeightSettingModal(false)}>
+          <View className={styles.weightModal} onClick={e => e.stopPropagation()}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>⚖️ 评分权重设置</Text>
+              <Text className={styles.closeBtn} onClick={() => setShowWeightSettingModal(false)}>×</Text>
+            </View>
+
+            <View className={styles.weightHint}>
+              <Text className={styles.weightHintText}>
+                调整灵敏度和亮灯时长在综合评分中的占比，两者之和为100%。
+                当前设置将影响排行榜、详情页和投诉文案中的所有评分。
+              </Text>
+            </View>
+
+            <View className={styles.weightSection}>
+              <View className={styles.weightRow}>
+                <Text className={styles.weightLabel}>灵敏度权重</Text>
+                <Text className={styles.weightValue + ' ' + styles.sensitivityValue}>{tempSensitivityWeight}%</Text>
+              </View>
+              <Slider
+                className={styles.weightSlider}
+                min={0}
+                max={100}
+                step={5}
+                value={tempSensitivityWeight}
+                activeColor="#FF6B35"
+                backgroundColor="#E2E8F0"
+                blockColor="#FF6B35"
+                blockSize={28}
+                onChanging={(e) => handleSensitivityWeightChange(e.detail.value)}
+              />
+              <View className={styles.weightScale}>
+                <Text className={styles.scaleText}>0%</Text>
+                <Text className={styles.scaleText}>50%</Text>
+                <Text className={styles.scaleText}>100%</Text>
+              </View>
+            </View>
+
+            <View className={styles.weightSection}>
+              <View className={styles.weightRow}>
+                <Text className={styles.weightLabel}>亮灯时长权重</Text>
+                <Text className={styles.weightValue + ' ' + styles.durationValue}>{100 - tempSensitivityWeight}%</Text>
+              </View>
+              <Slider
+                className={styles.weightSlider}
+                min={0}
+                max={100}
+                step={5}
+                value={100 - tempSensitivityWeight}
+                activeColor="#0EA5E9"
+                backgroundColor="#E2E8F0"
+                blockColor="#0EA5E9"
+                blockSize={28}
+                onChanging={(e) => handleSensitivityWeightChange(100 - e.detail.value)}
+              />
+              <View className={styles.weightScale}>
+                <Text className={styles.scaleText}>0%</Text>
+                <Text className={styles.scaleText}>50%</Text>
+                <Text className={styles.scaleText}>100%</Text>
+              </View>
+            </View>
+
+            <View className={styles.weightPresetRow}>
+              <Button className={styles.presetBtn} onClick={handleResetWeights}>
+                恢复默认 (50:50)
+              </Button>
+            </View>
+
+            <View className={styles.weightSummary}>
+              <View className={styles.summaryBar}>
+                <View
+                  className={styles.summarySensitivity}
+                  style={{ width: `${tempSensitivityWeight}%` }}
+                />
+                <View
+                  className={styles.summaryDuration}
+                  style={{ width: `${100 - tempSensitivityWeight}%` }}
+                />
+              </View>
+              <View className={styles.summaryLegend}>
+                <View className={styles.legendItem}>
+                  <View className={styles.legendDot + ' ' + styles.legendSensitivity} />
+                  <Text className={styles.legendText}>灵敏度 {tempSensitivityWeight}%</Text>
+                </View>
+                <View className={styles.legendItem}>
+                  <View className={styles.legendDot + ' ' + styles.legendDuration} />
+                  <Text className={styles.legendText}>亮灯时长 {100 - tempSensitivityWeight}%</Text>
+                </View>
+              </View>
+            </View>
+
+            <View className={styles.modalFooter}>
+              <Button className={styles.cancelBtn} onClick={() => setShowWeightSettingModal(false)}>
+                取消
+              </Button>
+              <Button className={styles.confirmBtn} onClick={handleSaveWeights}>
+                保存设置
               </Button>
             </View>
           </View>

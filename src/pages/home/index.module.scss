@@ -411,3 +411,158 @@
   font-size: $font-size-md;
   color: $color-text-secondary;
 }
+
+.weightBtn {
+  background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+  color: $color-text-white;
+  height: $button-height-md;
+  font-size: $font-size-md;
+}
+
+.weightModal {
+  width: 100%;
+  max-width: 680rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+}
+
+.weightHint {
+  background: rgba($color-primary, 0.05);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.weightHintText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.weightSection {
+  margin-bottom: $spacing-xl;
+
+  &:last-of-type {
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.weightRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.weightLabel {
+  font-size: $font-size-lg;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.weightValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+}
+
+.sensitivityValue {
+  color: #FF6B35;
+}
+
+.durationValue {
+  color: #0EA5E9;
+}
+
+.weightSlider {
+  margin: 0;
+}
+
+.weightScale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-xs;
+}
+
+.scaleText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.weightPresetRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: $spacing-xl;
+}
+
+.presetBtn {
+  @include button-reset;
+  height: 64rpx;
+  padding: 0 $spacing-xl;
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.weightSummary {
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.summaryBar {
+  display: flex;
+  height: 24rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+}
+
+.summarySensitivity {
+  background: linear-gradient(90deg, #FF6B35 0%, #FB923C 100%);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.summaryDuration {
+  background: linear-gradient(90deg, #0EA5E9 0%, #38BDF8 100%);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.summaryLegend {
+  display: flex;
+  justify-content: space-around;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.legendDot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+}
+
+.legendSensitivity {
+  background: #FF6B35;
+}
+
+.legendDuration {
+  background: #0EA5E9;
+}
+
+.legendText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}

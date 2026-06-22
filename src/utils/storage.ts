@@ -1,12 +1,13 @@
 import Taro from '@tarojs/taro';
-import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle, ComplaintRecord, ComplaintStatus, PropertyFeedback } from '../types';
-import { RETEST_CYCLE_CONFIG } from '../types';
+import type { Building, TestRecord, RepairRecord, RepairStatus, RetestCycle, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights } from '../types';
+import { RETEST_CYCLE_CONFIG, DEFAULT_SCORE_WEIGHTS } from '../types';
 
 const BUILDINGS_KEY = 'light_evaluator_buildings';
 const RECORDS_KEY = 'light_evaluator_records';
 const CURRENT_BUILDING_KEY = 'light_evaluator_current_building';
 const REPAIR_RECORDS_KEY = 'light_evaluator_repair_records';
 const COMPLAINT_RECORDS_KEY = 'light_evaluator_complaint_records';
+const SCORE_WEIGHTS_KEY = 'light_evaluator_score_weights';
 
 export const storage = {
   getBuildings(): Building[] {
@@ -295,6 +296,34 @@ export const storage = {
     const records = this.getComplaintRecords().filter(r => r.id !== id);
     this.saveComplaintRecords(records);
     return records;
+  },
+
+  getScoreWeights(): ScoreWeights {
+    try {
+      const data = Taro.getStorageSync(SCORE_WEIGHTS_KEY);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (
+          typeof parsed.sensitivityWeight === 'number' &&
+          typeof parsed.durationWeight === 'number' &&
+          parsed.sensitivityWeight + parsed.durationWeight === 100
+        ) {
+          return parsed;
+        }
+      }
+      return { ...DEFAULT_SCORE_WEIGHTS };
+    } catch (e) {
+      console.error('[Storage] getScoreWeights error:', e);
+      return { ...DEFAULT_SCORE_WEIGHTS };
+    }
+  },
+
+  saveScoreWeights(weights: ScoreWeights): void {
+    try {
+      Taro.setStorageSync(SCORE_WEIGHTS_KEY, JSON.stringify(weights));
+    } catch (e) {
+      console.error('[Storage] saveScoreWeights error:', e);
+    }
   }
 };
 
@@ -366,7 +395,8 @@ export const generateId = (): string => {
 export const calculateScore = (
   sensitivityScore: number,
   duration: number,
-  hasBlindSpot: boolean
+  hasBlindSpot: boolean,
+  weights: ScoreWeights = DEFAULT_SCORE_WEIGHTS
 ): { totalScore: number; grade: 'excellent' | 'good' | 'poor' } => {
   let durationScore = 50;
   if (duration >= 30 && duration <= 60) {
@@ -381,8 +411,10 @@ export const calculateScore = (
     durationScore = 30;
   }
 
+  const sensRatio = weights.sensitivityWeight / 100;
+  const durRatio = weights.durationWeight / 100;
   const blindSpotPenalty = hasBlindSpot ? 20 : 0;
-  const totalScore = Math.round((sensitivityScore * 0.5 + durationScore * 0.5) - blindSpotPenalty);
+  const totalScore = Math.round((sensitivityScore * sensRatio + durationScore * durRatio) - blindSpotPenalty);
   const finalScore = Math.max(0, Math.min(100, totalScore));
 
   let grade: 'excellent' | 'good' | 'poor' = 'poor';

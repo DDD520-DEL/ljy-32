@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback } from '../types';
+import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights } from '../types';
+import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 import { generateReport } from '../utils/reportUtils';
@@ -12,12 +13,15 @@ interface DataContextType {
   currentBuildingId: string;
   currentUser: NeighborUser | null;
   collaborations: CollaborationSession[];
+  scoreWeights: ScoreWeights;
   setCurrentBuildingId: (id: string) => void;
   addBuilding: (building: Omit<Building, 'id' | 'createTime'>) => void;
   updateBuilding: (building: Building) => void;
   deleteBuilding: (id: string) => void;
   addRecord: (record: Omit<TestRecord, 'id' | 'totalScore' | 'grade' | 'testTime'>) => void;
   deleteRecord: (id: string) => void;
+  updateScoreWeights: (weights: ScoreWeights) => void;
+  calculateRecordScore: (record: TestRecord) => { totalScore: number; grade: 'excellent' | 'good' | 'poor' };
   getRankList: () => RankItem[];
   getCurrentBuilding: () => Building | undefined;
   getRecordsByCurrentBuilding: () => TestRecord[];
@@ -55,6 +59,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentBuildingId, setCurrentBuildingId] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<NeighborUser | null>(null);
   const [collaborations, setCollaborations] = useState<CollaborationSession[]>([]);
+  const [scoreWeights, setScoreWeights] = useState<ScoreWeights>({ ...DEFAULT_SCORE_WEIGHTS });
 
   useEffect(() => {
     setBuildings(storage.getBuildings());
@@ -64,7 +69,27 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentBuildingId(storage.getCurrentBuildingId());
     setCurrentUser(neighborStorage.getCurrentUser());
     setCollaborations(neighborStorage.getCollaborations());
+    setScoreWeights(storage.getScoreWeights());
   }, []);
+
+  const calculateRecordScore = (record: TestRecord): { totalScore: number; grade: 'excellent' | 'good' | 'poor' } => {
+    return calculateScore(record.sensitivityScore, record.duration, record.hasBlindSpot, scoreWeights);
+  };
+
+  const updateScoreWeights = (weights: ScoreWeights) => {
+    const normalized = {
+      sensitivityWeight: Math.max(0, Math.min(100, weights.sensitivityWeight)),
+      durationWeight: Math.max(0, Math.min(100, weights.durationWeight))
+    };
+    const total = normalized.sensitivityWeight + normalized.durationWeight;
+    if (total !== 100) {
+      const ratio = 100 / total;
+      normalized.sensitivityWeight = Math.round(normalized.sensitivityWeight * ratio);
+      normalized.durationWeight = 100 - normalized.sensitivityWeight;
+    }
+    setScoreWeights(normalized);
+    storage.saveScoreWeights(normalized);
+  };
 
   useEffect(() => {
     storage.saveCurrentBuildingId(currentBuildingId);
@@ -147,15 +172,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const rankList: RankItem[] = Array.from(floorMap.entries()).map(([, data]) => {
-      const scores = data.records.map(r => r.totalScore);
+      const scores = data.records.map(r => calculateRecordScore(r).totalScore);
       const averageScore = Math.round(
         scores.reduce((a, b) => a + b, 0) / scores.length
       );
 
       let grade: 'excellent' | 'good' | 'poor' = 'poor';
-      if (averageScore >= 80) {
+      if (averageScore >= GRADE_CONFIG.excellent.minScore) {
         grade = 'excellent';
-      } else if (averageScore >= 50) {
+      } else if (averageScore >= GRADE_CONFIG.good.minScore) {
         grade = 'good';
       }
 
@@ -170,13 +195,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const contributorMap = new Map<string, ContributorInfo>();
       data.records.forEach(r => {
         const testerKey = r.testerId || r.id;
+        const recScore = calculateRecordScore(r);
         if (!contributorMap.has(testerKey)) {
           contributorMap.set(testerKey, {
             testerId: r.testerId || '',
             testerName: r.testerName || '匿名',
-            score: r.totalScore,
+            score: recScore.totalScore,
             testTime: r.testTime,
-            grade: r.grade
+            grade: recScore.grade
           });
         } else {
           const existing = contributorMap.get(testerKey)!;
@@ -184,9 +210,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             contributorMap.set(testerKey, {
               testerId: r.testerId || '',
               testerName: r.testerName || '匿名',
-              score: r.totalScore,
+              score: recScore.totalScore,
               testTime: r.testTime,
-              grade: r.grade
+              grade: recScore.grade
             });
           }
         }
@@ -359,7 +385,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const building = getCurrentBuilding();
     if (!building) return null;
     const buildingRecords = getRecordsByCurrentBuilding();
-    return generateReport(type, building, buildingRecords);
+    return generateReport(type, building, buildingRecords, scoreWeights);
   };
 
   const calculateBuildingStats = (building: Building, buildingRecords: TestRecord[]): BuildingStats => {
@@ -385,20 +411,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (totalTests > 0) {
       const totalSensitivity = buildingRecords.reduce((sum, r) => sum + r.sensitivityScore, 0);
-      const totalScoreSum = buildingRecords.reduce((sum, r) => sum + r.totalScore, 0);
+      const totalScoreSum = buildingRecords.reduce((sum, r) => sum + calculateRecordScore(r).totalScore, 0);
       avgSensitivityScore = Math.round(totalSensitivity / totalTests);
       avgTotalScore = Math.round(totalScoreSum / totalTests);
 
-      excellentCount = buildingRecords.filter(r => r.grade === 'excellent').length;
-      goodCount = buildingRecords.filter(r => r.grade === 'good').length;
-      poorCount = buildingRecords.filter(r => r.grade === 'poor').length;
+      excellentCount = buildingRecords.filter(r => calculateRecordScore(r).grade === 'excellent').length;
+      goodCount = buildingRecords.filter(r => calculateRecordScore(r).grade === 'good').length;
+      poorCount = buildingRecords.filter(r => calculateRecordScore(r).grade === 'poor').length;
 
       whisperCount = buildingRecords.filter(r => r.sensitivityLevel === 'whisper').length;
       normalCount = buildingRecords.filter(r => r.sensitivityLevel === 'normal').length;
       loudCount = buildingRecords.filter(r => r.sensitivityLevel === 'loud').length;
       shoutCount = buildingRecords.filter(r => r.sensitivityLevel === 'shout').length;
 
-      needReplaceCount = buildingRecords.filter(r => r.grade === 'poor' || r.sensitivityLevel === 'shout').length;
+      needReplaceCount = buildingRecords.filter(r => calculateRecordScore(r).grade === 'poor' || r.sensitivityLevel === 'shout').length;
       blindSpotCount = buildingRecords.filter(r => r.hasBlindSpot).length;
 
       const latestRecord = buildingRecords.reduce((latest, record) => {
@@ -526,12 +552,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         currentBuildingId,
         currentUser,
         collaborations,
+        scoreWeights,
         setCurrentBuildingId,
         addBuilding,
         updateBuilding,
         deleteBuilding,
         addRecord,
         deleteRecord,
+        updateScoreWeights,
+        calculateRecordScore,
         getRankList,
         getCurrentBuilding,
         getRecordsByCurrentBuilding,

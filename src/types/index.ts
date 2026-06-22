@@ -1,5 +1,15 @@
 export type SensitivityLevel = 'whisper' | 'normal' | 'loud' | 'shout';
 
+export interface ScoreWeights {
+  sensitivityWeight: number;
+  durationWeight: number;
+}
+
+export const DEFAULT_SCORE_WEIGHTS: ScoreWeights = {
+  sensitivityWeight: 50,
+  durationWeight: 50
+};
+
 export type RetestCycle = 'one_week' | 'two_weeks' | 'one_month' | 'three_months' | 'custom';
 
 export const RETEST_CYCLE_CONFIG: Record<RetestCycle, { label: string; days: number }> = {

@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
-import type { Building, TestRecord, ReportData, ReportType, SensitivityLevel, SensitivityTrendItem, FloorIssueChange } from '../types';
-import { SENSITIVITY_CONFIG, GRADE_CONFIG } from '../types';
+import type { Building, TestRecord, ReportData, ReportType, SensitivityLevel, SensitivityTrendItem, FloorIssueChange, ScoreWeights } from '../types';
+import { GRADE_CONFIG, DEFAULT_SCORE_WEIGHTS } from '../types';
+import { calculateScore } from './storage';
 
 dayjs.extend(isoWeek);
 
@@ -79,11 +80,12 @@ const calculateGradeFromScore = (score: number): 'excellent' | 'good' | 'poor' =
   return 'poor';
 };
 
-const getFloorAvgScoreMap = (records: TestRecord[]): Map<number, { score: number; count: number; grade: 'excellent' | 'good' | 'poor' }> => {
+const getFloorAvgScoreMap = (records: TestRecord[], weights: ScoreWeights = DEFAULT_SCORE_WEIGHTS): Map<number, { score: number; count: number; grade: 'excellent' | 'good' | 'poor' }> => {
   const map = new Map<number, { total: number; count: number }>();
   records.forEach(r => {
     const existing = map.get(r.floor) || { total: 0, count: 0 };
-    map.set(r.floor, { total: existing.total + r.totalScore, count: existing.count + 1 });
+    const recScore = calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights);
+    map.set(r.floor, { total: existing.total + recScore.totalScore, count: existing.count + 1 });
   });
   const result = new Map<number, { score: number; count: number; grade: 'excellent' | 'good' | 'poor' }>();
   map.forEach((v, floor) => {
@@ -97,7 +99,8 @@ const generateSensitivityTrend = (
   type: ReportType,
   records: TestRecord[],
   start: Date,
-  end: Date
+  end: Date,
+  weights: ScoreWeights = DEFAULT_SCORE_WEIGHTS
 ): SensitivityTrendItem[] => {
   const trend: SensitivityTrendItem[] = [];
   if (type === 'weekly') {
@@ -107,7 +110,7 @@ const generateSensitivityTrend = (
       const dayEnd = dayjs(start).add(i, 'day').endOf('day').toDate();
       const dayRecords = filterRecordsByDateRange(records, dayStart, dayEnd);
       const avgScore = dayRecords.length > 0
-        ? Math.round(dayRecords.reduce((sum, r) => sum + r.totalScore, 0) / dayRecords.length)
+        ? Math.round(dayRecords.reduce((sum, r) => sum + calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).totalScore, 0) / dayRecords.length)
         : 0;
       trend.push({
         date: dayjs(dayStart).format('YYYY-MM-DD'),
@@ -125,7 +128,7 @@ const generateSensitivityTrend = (
       const segEnd = dayjs(start).date(segEndDate).endOf('day').toDate();
       const segRecords = filterRecordsByDateRange(records, segStart, segEnd);
       const avgScore = segRecords.length > 0
-        ? Math.round(segRecords.reduce((sum, r) => sum + r.totalScore, 0) / segRecords.length)
+        ? Math.round(segRecords.reduce((sum, r) => sum + calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).totalScore, 0) / segRecords.length)
         : 0;
       const label = step === 1 ? `${d}日` : `${d}-${segEndDate}日`;
       trend.push({
@@ -141,10 +144,11 @@ const generateSensitivityTrend = (
 
 const calculateFloorChanges = (
   currRecords: TestRecord[],
-  prevRecords: TestRecord[]
+  prevRecords: TestRecord[],
+  weights: ScoreWeights = DEFAULT_SCORE_WEIGHTS
 ): { improved: FloorIssueChange[]; declined: FloorIssueChange[]; unchanged: FloorIssueChange[]; new: FloorIssueChange[] } => {
-  const currMap = getFloorAvgScoreMap(currRecords);
-  const prevMap = getFloorAvgScoreMap(prevRecords);
+  const currMap = getFloorAvgScoreMap(currRecords, weights);
+  const prevMap = getFloorAvgScoreMap(prevRecords, weights);
 
   const improved: FloorIssueChange[] = [];
   const declined: FloorIssueChange[] = [];
@@ -201,7 +205,8 @@ const getContributors = (records: TestRecord[]): Array<{ testerName: string; tes
 export const generateReport = (
   type: ReportType,
   building: Building,
-  buildingRecords: TestRecord[]
+  buildingRecords: TestRecord[],
+  weights: ScoreWeights = DEFAULT_SCORE_WEIGHTS
 ): ReportData | null => {
   if (!building || buildingRecords.length === 0) return null;
 
@@ -223,27 +228,27 @@ export const generateReport = (
   const testedFloorsPrevSet = new Set(prevRecords.map(r => r.floor));
 
   const avgScore = currRecords.length > 0
-    ? Math.round(currRecords.reduce((sum, r) => sum + r.totalScore, 0) / currRecords.length)
+    ? Math.round(currRecords.reduce((sum, r) => sum + calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).totalScore, 0) / currRecords.length)
     : 0;
   const avgScorePrev = prevRecords.length > 0
-    ? Math.round(prevRecords.reduce((sum, r) => sum + r.totalScore, 0) / prevRecords.length)
+    ? Math.round(prevRecords.reduce((sum, r) => sum + calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).totalScore, 0) / prevRecords.length)
     : 0;
 
   const sensitivityLevelDist = calculateSensitivityDist(currRecords);
   const sensitivityLevelDistPrev = calculateSensitivityDist(prevRecords);
 
-  const sensitivityTrend = generateSensitivityTrend(type, buildingRecords, currStart, currEnd);
+  const sensitivityTrend = generateSensitivityTrend(type, buildingRecords, currStart, currEnd, weights);
 
-  const excellentCount = currRecords.filter(r => r.grade === 'excellent').length;
-  const goodCount = currRecords.filter(r => r.grade === 'good').length;
-  const poorCount = currRecords.filter(r => r.grade === 'poor').length;
-  const excellentCountPrev = prevRecords.filter(r => r.grade === 'excellent').length;
-  const goodCountPrev = prevRecords.filter(r => r.grade === 'good').length;
-  const poorCountPrev = prevRecords.filter(r => r.grade === 'poor').length;
+  const excellentCount = currRecords.filter(r => calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).grade === 'excellent').length;
+  const goodCount = currRecords.filter(r => calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).grade === 'good').length;
+  const poorCount = currRecords.filter(r => calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).grade === 'poor').length;
+  const excellentCountPrev = prevRecords.filter(r => calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).grade === 'excellent').length;
+  const goodCountPrev = prevRecords.filter(r => calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).grade === 'good').length;
+  const poorCountPrev = prevRecords.filter(r => calculateScore(r.sensitivityScore, r.duration, r.hasBlindSpot, weights).grade === 'poor').length;
 
-  const floorChanges = calculateFloorChanges(currRecords, prevRecords);
+  const floorChanges = calculateFloorChanges(currRecords, prevRecords, weights);
 
-  const floorAvgMap = getFloorAvgScoreMap(currRecords);
+  const floorAvgMap = getFloorAvgScoreMap(currRecords, weights);
   const floorList = Array.from(floorAvgMap.entries()).map(([floor, data]) => ({
     floor,
     avgScore: data.score,

@@ -10,7 +10,7 @@ import { formatDate } from '../../utils/storage';
 
 const DetailPage: React.FC = () => {
   const router = useRouter();
-  const { getRecordsByBuilding, getRankList, getCurrentBuilding, addRecord } = useData();
+  const { getRecordsByBuilding, getRankList, getCurrentBuilding, addRecord, calculateRecordScore } = useData();
 
   const floor = parseInt(router.params.floor || '0', 10);
   const buildingId = router.params.buildingId || '';
@@ -44,12 +44,12 @@ const DetailPage: React.FC = () => {
     );
     const hasBlindSpot = floorRecords.some(r => r.hasBlindSpot);
     const avgScore = Math.round(
-      floorRecords.reduce((sum, r) => sum + r.totalScore, 0) / floorRecords.length
+      floorRecords.reduce((sum, r) => sum + calculateRecordScore(r).totalScore, 0) / floorRecords.length
     );
 
     let grade: 'excellent' | 'good' | 'poor' = 'poor';
-    if (avgScore >= 80) grade = 'excellent';
-    else if (avgScore >= 50) grade = 'good';
+    if (avgScore >= GRADE_CONFIG.excellent.minScore) grade = 'excellent';
+    else if (avgScore >= GRADE_CONFIG.good.minScore) grade = 'good';
 
     return {
       avgSensitivity,
@@ -59,7 +59,7 @@ const DetailPage: React.FC = () => {
       grade,
       testCount: floorRecords.length
     };
-  }, [floorRecords]);
+  }, [floorRecords, calculateRecordScore]);
 
   const testerStats = useMemo(() => {
     const testerMap = new Map<string, {
@@ -85,13 +85,13 @@ const DetailPage: React.FC = () => {
     });
 
     testerMap.forEach((stats) => {
-      const scores = stats.records.map(r => r.totalScore);
+      const scores = stats.records.map(r => calculateRecordScore(r).totalScore);
       stats.avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
       stats.bestScore = Math.max(...scores);
     });
 
     return Array.from(testerMap.values()).sort((a, b) => b.avgScore - a.avgScore);
-  }, [floorRecords]);
+  }, [floorRecords, calculateRecordScore]);
 
   const getSensitivityLabel = (score: number): string => {
     if (score >= 85) return '轻声';
@@ -291,12 +291,13 @@ const DetailPage: React.FC = () => {
                     {tester.records.map(record => {
                       const sensitivityInfo = SENSITIVITY_CONFIG[record.sensitivityLevel];
                       const durationStatus = getDurationStatus(record.duration);
+                      const recScore = calculateRecordScore(record);
 
                       return (
                         <View key={record.id} className={styles.testerRecordItem}>
                           <View className={styles.testerRecordHeader}>
                             <Text className={styles.testerRecordTime}>{formatDate(record.testTime)}</Text>
-                            <ScoreBadge score={record.totalScore} grade={record.grade} size="small" />
+                            <ScoreBadge score={recScore.totalScore} grade={recScore.grade} size="small" />
                           </View>
                           <View className={styles.testerRecordDetails}>
                             <Text className={styles.testerRecordDetail}>
@@ -349,6 +350,7 @@ const DetailPage: React.FC = () => {
             {floorRecords.map(record => {
               const sensitivityInfo = SENSITIVITY_CONFIG[record.sensitivityLevel];
               const durationStatus = getDurationStatus(record.duration);
+              const recScore = calculateRecordScore(record);
 
               return (
                 <View key={record.id} className={styles.recordCard}>
@@ -361,7 +363,7 @@ const DetailPage: React.FC = () => {
                         </View>
                       )}
                     </View>
-                    <ScoreBadge score={record.totalScore} grade={record.grade} size="small" />
+                    <ScoreBadge score={recScore.totalScore} grade={recScore.grade} size="small" />
                   </View>
 
                   <View className={styles.recordContent}>
