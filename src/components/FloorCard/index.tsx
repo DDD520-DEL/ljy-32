@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
 import ScoreBadge from '../ScoreBadge';
 import type { TestRecord } from '../../types';
-import { SENSITIVITY_CONFIG } from '../../types';
+import { SENSITIVITY_CONFIG, UNKNOWN_BRAND } from '../../types';
 import { formatDate } from '../../utils/storage';
 
 interface FloorCardProps {
@@ -64,6 +64,16 @@ const FloorCard: React.FC<FloorCardProps> = ({ record, onDelete, onClick }) => {
         {record.hasBlindSpot && record.blindSpotDescription && (
           <View className={styles.blindSpotDesc}>
             <Text className={styles.blindSpotText}>盲区位置：{record.blindSpotDescription}</Text>
+          </View>
+        )}
+
+        {(record.lightBrand?.trim() || record.lightModel?.trim()) && (
+          <View className={styles.lightBrandRow}>
+            <Text className={styles.detailLabel}>灯具品牌</Text>
+            <Text className={styles.lightBrandText}>
+              {record.lightBrand?.trim() || UNKNOWN_BRAND}
+              {record.lightModel?.trim() ? ` · ${record.lightModel.trim()}` : ''}
+            </Text>
           </View>
         )}
       </View>

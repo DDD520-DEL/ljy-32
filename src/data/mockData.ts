@@ -1,6 +1,6 @@
 import type { Building, TestRecord } from '../types';
 import { generateId, calculateScore } from '../utils/storage';
-import { SENSITIVITY_CONFIG } from '../types';
+import { SENSITIVITY_CONFIG, COMMON_LIGHT_BRANDS } from '../types';
 
 export const mockBuildings: Building[] = [
   {
@@ -29,13 +29,32 @@ const mockTesters = [
 
 const sensitivityLevels: Array<'whisper' | 'normal' | 'loud' | 'shout'> = ['whisper', 'normal', 'loud', 'shout'];
 
+const mockLightModels: Record<string, string[]> = {
+  '飞利浦 (Philips)': ['LED-SD-005W', '智能感应灯 E27', '楼道感应灯 SL-200'],
+  '欧普照明 (OPPLE)': ['声光控灯泡 5W', 'MX-SD001 感应灯', '走廊吸顶灯'],
+  '雷士照明 (NVC)': ['ESD-05 声控灯', '楼道感应灯 7W', 'LED 感应球泡'],
+  '三雄极光 (Pak)': ['PAK-SD01 感应灯', '声控吸顶灯', '节能感应灯泡'],
+  '佛山照明 (FSL)': ['FSL-SD 5W', '声光控感应灯', '楼道 LED 灯'],
+  '阳光照明 (Yankon)': ['YANKON-SD03', '人体感应灯', '智能声控灯']
+};
+
 export const generateMockRecords = (buildings: Building[]): TestRecord[] => {
   const records: TestRecord[] = [];
+  const useBrandList = COMMON_LIGHT_BRANDS.filter(b => b !== '其他品牌').slice(0, 6);
 
   buildings.forEach(building => {
     for (let floor = 1; floor <= Math.min(building.totalFloors, 10); floor++) {
       const testerCount = Math.random() > 0.5 ? 2 : 1;
       const selectedTesters = mockTesters.slice(0, testerCount);
+
+      const floorHasBrand = Math.random() > 0.25;
+      let floorBrand = '';
+      let floorModel = '';
+      if (floorHasBrand) {
+        floorBrand = useBrandList[Math.floor(Math.random() * useBrandList.length)];
+        const brandModels = mockLightModels[floorBrand] || ['LED 声控灯'];
+        floorModel = brandModels[Math.floor(Math.random() * brandModels.length)];
+      }
 
       selectedTesters.forEach(tester => {
         const testCount = Math.floor(Math.random() * 2) + 1;
@@ -70,7 +89,9 @@ export const generateMockRecords = (buildings: Building[]): TestRecord[] => {
             totalScore,
             grade,
             testerId: tester.id,
-            testerName: tester.name
+            testerName: tester.name,
+            lightBrand: floorHasBrand ? floorBrand : undefined,
+            lightModel: floorHasBrand ? floorModel : undefined
           });
         }
       });

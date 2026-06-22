@@ -4,7 +4,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
-import { SENSITIVITY_CONFIG, REPAIR_STATUS_CONFIG, RepairStatus, ComplaintRecord, PropertyFeedback, ComplaintStatus } from '../../types';
+import { SENSITIVITY_CONFIG, REPAIR_STATUS_CONFIG, RepairStatus, ComplaintRecord, PropertyFeedback, ComplaintStatus, UNKNOWN_BRAND } from '../../types';
 import ComplaintTimeline from '../../components/ComplaintTimeline';
 import FeedbackModal from '../../components/FeedbackModal';
 
@@ -76,6 +76,45 @@ const SharePage: React.FC = () => {
     return photos;
   };
 
+  const getFloorLightInfo = (floor: number): { brand: string; model: string } => {
+    const floorRecords = allRecords.filter(r => r.floor === floor);
+    if (floorRecords.length === 0) return { brand: '', model: '' };
+
+    const brandCount = new Map<string, number>();
+    const modelCount = new Map<string, number>();
+
+    floorRecords.forEach(record => {
+      if (record.lightBrand?.trim()) {
+        const b = record.lightBrand.trim();
+        brandCount.set(b, (brandCount.get(b) || 0) + 1);
+      }
+      if (record.lightModel?.trim()) {
+        const m = record.lightModel.trim();
+        modelCount.set(m, (modelCount.get(m) || 0) + 1);
+      }
+    });
+
+    let brand = '';
+    let model = '';
+    let brandMax = 0;
+    brandCount.forEach((count, b) => {
+      if (count > brandMax) {
+        brandMax = count;
+        brand = b;
+      }
+    });
+
+    let modelMax = 0;
+    modelCount.forEach((count, m) => {
+      if (count > modelMax) {
+        modelMax = count;
+        model = m;
+      }
+    });
+
+    return { brand, model };
+  };
+
   const handlePreviewImage = useCallback((photos: string[], index: number) => {
     Taro.previewImage({
       current: photos[index],
@@ -95,6 +134,8 @@ const SharePage: React.FC = () => {
     text += `尊敬的物业您好：\n\n`;
     text += `我们是${currentBuilding.address}${currentBuilding.name}的业主。近期我们对本楼栋各楼层的声控灯进行了详细测试，发现以下楼层的声控灯存在严重问题，急需维修或更换：\n\n`;
 
+    const involvedBrands = new Set<string>();
+
     poorFloors.forEach((floorItem, index) => {
       const issues = getFloorIssues(floorItem.floor);
       const floorRecords = allRecords.filter(r => r.floor === floorItem.floor);
@@ -102,9 +143,18 @@ const SharePage: React.FC = () => {
         (a, b) => new Date(b.testTime).getTime() - new Date(a.testTime).getTime()
       )[0];
       const floorPhotos = getFloorPhotos(floorItem.floor);
+      const lightInfo = getFloorLightInfo(floorItem.floor);
 
       text += `${index + 1}. ${floorItem.floor}楼（综合评分：${floorItem.averageScore}分）\n`;
       text += `   问题：${issues}\n`;
+      if (lightInfo.brand || lightInfo.model) {
+        const brandText = lightInfo.brand ? lightInfo.brand : UNKNOWN_BRAND;
+        const modelText = lightInfo.model ? `，型号：${lightInfo.model}` : '';
+        text += `   - 灯具品牌：${brandText}${modelText}\n`;
+        if (lightInfo.brand) {
+          involvedBrands.add(lightInfo.brand);
+        }
+      }
       if (latestRecord) {
         const sens = SENSITIVITY_CONFIG[latestRecord.sensitivityLevel];
         text += `   - 灵敏度：${sens.label}（${sens.description}）\n`;
@@ -119,6 +169,11 @@ const SharePage: React.FC = () => {
       }
       text += `\n`;
     });
+
+    if (involvedBrands.size > 0) {
+      text += `※ 本次投诉涉及灯具品牌：${Array.from(involvedBrands).join('、')}。\n`;
+      text += `  建议物业在更换时优先考虑性能更稳定的品牌型号。\n\n`;
+    }
 
     const totalPhotos = poorFloors.reduce((sum, item) => sum + getFloorPhotos(item.floor).length, 0);
     if (totalPhotos > 0) {
@@ -341,6 +396,8 @@ const SharePage: React.FC = () => {
 
               const floorPhotos = getFloorPhotos(item.floor);
 
+              const lightInfo = getFloorLightInfo(item.floor);
+
               return (
                 <View key={`${item.buildingName}-${item.floor}`} className={styles.poorFloorItem}>
                   <View className={styles.floorInfo}>
@@ -353,6 +410,11 @@ const SharePage: React.FC = () => {
                       )}
                     </View>
                     <Text className={styles.floorIssues}>{getFloorIssues(item.floor)}</Text>
+                    {(lightInfo.brand || lightInfo.model) && (
+                      <Text className={styles.floorBrand}>
+                        💡 {lightInfo.brand || UNKNOWN_BRAND}{lightInfo.model ? ` · ${lightInfo.model}` : ''}
+                      </Text>
+                    )}
                     {floorPhotos.length > 0 && (
                       <View className={styles.floorPhotos}>
                         {floorPhotos.slice(0, 4).map((photo, idx) => (

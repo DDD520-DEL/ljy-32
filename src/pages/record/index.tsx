@@ -6,7 +6,7 @@ import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
 import FloorCard from '../../components/FloorCard';
 import type { SensitivityLevel } from '../../types';
-import { SENSITIVITY_CONFIG } from '../../types';
+import { SENSITIVITY_CONFIG, COMMON_LIGHT_BRANDS } from '../../types';
 import { savePhotoPermanently, deletePhotoFile } from '../../utils/storage';
 import { consumePendingRetest } from '../../utils/retestNavigate';
 
@@ -33,7 +33,9 @@ const RecordPage: React.FC = () => {
     duration: '',
     hasBlindSpot: false,
     blindSpotDescription: '',
-    photos: [] as string[]
+    photos: [] as string[],
+    lightBrand: '',
+    lightModel: ''
   });
 
   useDidShow(() => {
@@ -51,7 +53,9 @@ const RecordPage: React.FC = () => {
         duration: '',
         hasBlindSpot: false,
         blindSpotDescription: '',
-        photos: []
+        photos: [],
+        lightBrand: '',
+        lightModel: ''
       });
       setTimeout(() => {
         setShowModal(true);
@@ -79,7 +83,9 @@ const RecordPage: React.FC = () => {
       duration: '',
       hasBlindSpot: false,
       blindSpotDescription: '',
-      photos: []
+      photos: [],
+      lightBrand: '',
+      lightModel: ''
     });
     setShowModal(true);
   };
@@ -157,7 +163,9 @@ const RecordPage: React.FC = () => {
       duration,
       hasBlindSpot: formData.hasBlindSpot,
       blindSpotDescription: formData.hasBlindSpot ? formData.blindSpotDescription.trim() : undefined,
-      photos: formData.photos.length > 0 ? formData.photos : undefined
+      photos: formData.photos.length > 0 ? formData.photos : undefined,
+      lightBrand: formData.lightBrand.trim() || undefined,
+      lightModel: formData.lightModel.trim() || undefined
     });
 
     Taro.showToast({ title: '记录成功', icon: 'success' });
@@ -300,6 +308,46 @@ const RecordPage: React.FC = () => {
                   onInput={e => setFormData({ ...formData, blindSpotDescription: e.detail.value })}
                 />
               )}
+            </View>
+
+            <View className={styles.formGroup}>
+              <Text className={styles.formLabel}>
+                灯具品牌 <Text className={styles.photoHint}>（选填，为后续统计分析和更换选型提供依据）</Text>
+              </Text>
+              <View className={styles.brandPickerRow}>
+                <Input
+                  className={styles.formInput}
+                  placeholder="请输入或点击右侧选择品牌"
+                  value={formData.lightBrand}
+                  onInput={e => setFormData({ ...formData, lightBrand: e.detail.value })}
+                />
+                <Button
+                  className={styles.pickBrandBtn}
+                  onClick={() => {
+                    Taro.showActionSheet({
+                      itemList: COMMON_LIGHT_BRANDS,
+                      success: (res) => {
+                        const selected = COMMON_LIGHT_BRANDS[res.tapIndex];
+                        setFormData({ ...formData, lightBrand: selected === '其他品牌' ? '' : selected });
+                      }
+                    });
+                  }}
+                >
+                  选择
+                </Button>
+              </View>
+            </View>
+
+            <View className={styles.formGroup}>
+              <Text className={styles.formLabel}>
+                灯具型号 <Text className={styles.photoHint}>（选填，可查看灯体上的标签铭牌）</Text>
+              </Text>
+              <Input
+                className={styles.formInput}
+                placeholder="如：LED-SD-005W、声光控灯泡 E27"
+                value={formData.lightModel}
+                onInput={e => setFormData({ ...formData, lightModel: e.detail.value })}
+              />
             </View>
 
             <View className={styles.formGroup}>

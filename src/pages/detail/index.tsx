@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import styles from './index.module.scss';
 import { useData } from '../../store/DataContext';
 import ScoreBadge from '../../components/ScoreBadge';
-import { SENSITIVITY_CONFIG, GRADE_CONFIG } from '../../types';
+import { SENSITIVITY_CONFIG, GRADE_CONFIG, UNKNOWN_BRAND } from '../../types';
 import { formatDate } from '../../utils/storage';
 
 const DetailPage: React.FC = () => {
@@ -60,6 +60,49 @@ const DetailPage: React.FC = () => {
       testCount: floorRecords.length
     };
   }, [floorRecords, calculateRecordScore]);
+
+  const lightInfo = useMemo(() => {
+    if (floorRecords.length === 0) return { brand: '', model: '', hasInfo: false };
+
+    const brandCount = new Map<string, number>();
+    const modelCount = new Map<string, number>();
+
+    floorRecords.forEach(record => {
+      if (record.lightBrand?.trim()) {
+        const b = record.lightBrand.trim();
+        brandCount.set(b, (brandCount.get(b) || 0) + 1);
+      }
+      if (record.lightModel?.trim()) {
+        const m = record.lightModel.trim();
+        modelCount.set(m, (modelCount.get(m) || 0) + 1);
+      }
+    });
+
+    let brand = '';
+    let model = '';
+    let brandMax = 0;
+    brandCount.forEach((count, b) => {
+      if (count > brandMax) {
+        brandMax = count;
+        brand = b;
+      }
+    });
+
+    let modelMax = 0;
+    modelCount.forEach((count, m) => {
+      if (count > modelMax) {
+        modelMax = count;
+        model = m;
+      }
+    });
+
+    return {
+      brand: brand || UNKNOWN_BRAND,
+      model,
+      hasInfo: !!(brand || model),
+      brandIsUnknown: !brand
+    };
+  }, [floorRecords]);
 
   const testerStats = useMemo(() => {
     const testerMap = new Map<string, {
@@ -254,6 +297,14 @@ const DetailPage: React.FC = () => {
                 {avgStats.hasBlindSpot ? '存在' : '无'}
               </Text>
             </View>
+            {lightInfo.hasInfo && (
+              <View className={styles.summaryRow}>
+                <Text className={styles.summaryLabel}>灯具品牌</Text>
+                <Text className={classNames(styles.summaryValue, { [styles.poor]: lightInfo.brandIsUnknown, [styles.excellent]: !lightInfo.brandIsUnknown })}>
+                  {lightInfo.brand}{lightInfo.model ? ` · ${lightInfo.model}` : ''}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       ) : null}
@@ -309,6 +360,12 @@ const DetailPage: React.FC = () => {
                             {record.hasBlindSpot && record.blindSpotDescription && (
                               <Text className={styles.testerRecordBlind}>
                                 盲区：{record.blindSpotDescription}
+                              </Text>
+                            )}
+                            {(record.lightBrand?.trim() || record.lightModel?.trim()) && (
+                              <Text className={styles.testerRecordDetail}>
+                                品牌：{record.lightBrand?.trim() || UNKNOWN_BRAND}
+                                {record.lightModel?.trim() ? ` · ${record.lightModel.trim()}` : ''}
                               </Text>
                             )}
                             {record.photos && record.photos.length > 0 && (
@@ -388,6 +445,15 @@ const DetailPage: React.FC = () => {
                         {record.hasBlindSpot ? '有' : '无'}
                       </Text>
                     </View>
+                    {(record.lightBrand?.trim() || record.lightModel?.trim()) && (
+                      <View className={styles.recordItem}>
+                        <Text className={styles.recordItemLabel}>灯具品牌</Text>
+                        <Text className={styles.recordItemValue}>
+                          {record.lightBrand?.trim() || UNKNOWN_BRAND}
+                          {record.lightModel?.trim() ? ` · ${record.lightModel.trim()}` : ''}
+                        </Text>
+                      </View>
+                    )}
                     {record.hasBlindSpot && record.blindSpotDescription && (
                       <View className={styles.blindSpotDesc}>
                         <Text className={styles.blindSpotText}>

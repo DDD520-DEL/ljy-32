@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Building, TestRecord, RankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights } from '../types';
-import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG } from '../types';
+import type { Building, TestRecord, RankItem, BrandRankItem, ContributorInfo, NeighborUser, InvitationCode, CollaborationSession, RepairRecord, RepairStatus, RetestReminder, RetestCycle, ReportType, ReportData, BuildingStats, ComplaintRecord, ComplaintStatus, PropertyFeedback, ScoreWeights } from '../types';
+import { DEFAULT_SCORE_WEIGHTS, GRADE_CONFIG, UNKNOWN_BRAND } from '../types';
 import { storage, calculateScore, generateId, getDaysSinceDate, isDataStale, isRetestOverdue, getDaysOverdue, getRetestDueDate } from '../utils/storage';
 import { invitation, neighborStorage } from '../utils/invitation';
 import { generateReport } from '../utils/reportUtils';
@@ -23,6 +23,7 @@ interface DataContextType {
   updateScoreWeights: (weights: ScoreWeights) => void;
   calculateRecordScore: (record: TestRecord) => { totalScore: number; grade: 'excellent' | 'good' | 'poor' };
   getRankList: () => RankItem[];
+  getBrandRankList: () => BrandRankItem[];
   getCurrentBuilding: () => Building | undefined;
   getRecordsByCurrentBuilding: () => TestRecord[];
   getRecordsByBuilding: (buildingId: string) => TestRecord[];
@@ -238,6 +239,90 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     return rankList;
+  };
+
+  const getBrandRankList = (): BrandRankItem[] => {
+    const buildingRecords = currentBuildingId
+      ? records.filter(r => r.buildingId === currentBuildingId)
+      : records;
+
+    if (buildingRecords.length === 0) return [];
+
+    const brandMap = new Map<string, {
+      records: TestRecord[];
+      models: Set<string>;
+      floors: Set<string>;
+    }>();
+
+    buildingRecords.forEach(record => {
+      const brand = record.lightBrand?.trim() || UNKNOWN_BRAND;
+      if (!brandMap.has(brand)) {
+        brandMap.set(brand, {
+          records: [],
+          models: new Set(),
+          floors: new Set()
+        });
+      }
+      const brandData = brandMap.get(brand)!;
+      brandData.records.push(record);
+      if (record.lightModel?.trim()) {
+        brandData.models.add(record.lightModel.trim());
+      }
+      brandData.floors.add(`${record.buildingId}-${record.floor}`);
+    });
+
+    const brandList: BrandRankItem[] = Array.from(brandMap.entries()).map(([brand, data]) => {
+      const scores = data.records.map(r => calculateRecordScore(r).totalScore);
+      const avgScore = Math.round(
+        scores.reduce((a, b) => a + b, 0) / scores.length
+      );
+
+      let grade: 'excellent' | 'good' | 'poor' = 'poor';
+      if (avgScore >= GRADE_CONFIG.excellent.minScore) {
+        grade = 'excellent';
+      } else if (avgScore >= GRADE_CONFIG.good.minScore) {
+        grade = 'good';
+      }
+
+      let excellentCount = 0;
+      let goodCount = 0;
+      let poorCount = 0;
+      let totalSensitivityScore = 0;
+
+      data.records.forEach(r => {
+        const recGrade = calculateRecordScore(r).grade;
+        if (recGrade === 'excellent') excellentCount++;
+        else if (recGrade === 'good') goodCount++;
+        else poorCount++;
+        totalSensitivityScore += r.sensitivityScore;
+      });
+
+      const testCount = data.records.length;
+      const avgSensitivityScore = Math.round(totalSensitivityScore / testCount);
+
+      return {
+        rank: 0,
+        brand,
+        avgScore,
+        testCount,
+        floorCount: data.floors.size,
+        excellentCount,
+        goodCount,
+        poorCount,
+        excellentRatio: Math.round((excellentCount / testCount) * 100),
+        poorRatio: Math.round((poorCount / testCount) * 100),
+        avgSensitivityScore,
+        models: Array.from(data.models),
+        grade
+      };
+    });
+
+    brandList.sort((a, b) => b.avgScore - a.avgScore);
+    brandList.forEach((item, index) => {
+      item.rank = index + 1;
+    });
+
+    return brandList;
   };
 
   const getCurrentBuilding = (): Building | undefined => {
@@ -562,6 +647,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateScoreWeights,
         calculateRecordScore,
         getRankList,
+        getBrandRankList,
         getCurrentBuilding,
         getRecordsByCurrentBuilding,
         getRecordsByBuilding,

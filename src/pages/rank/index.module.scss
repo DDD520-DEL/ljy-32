@@ -297,3 +297,241 @@
     color: $color-text-tertiary;
   }
 }
+
+.tabBar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.tabBtn {
+  @include button-reset;
+  flex: 1;
+  padding: $spacing-md;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.active {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.brandTop3Section {
+  margin-bottom: $spacing-xl;
+}
+
+.brandTop3Container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: $spacing-md;
+  padding: $spacing-lg 0;
+}
+
+.brandPodiumItem {
+  max-width: 220rpx;
+}
+
+.brandPodiumName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  text-align: center;
+  padding: 0 $spacing-xs;
+}
+
+.brandRankList {
+  margin-top: $spacing-lg;
+}
+
+.brandRankCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.9;
+  }
+}
+
+.brandCardHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.brandRankBadge {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, rgba($color-primary, 0.1) 0%, rgba($color-primary-light, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brandRankText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.brandInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.brandName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brandMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.brandScoreArea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
+.brandScore {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+
+  &.excellent {
+    color: #10B981;
+  }
+
+  &.good {
+    color: #F59E0B;
+  }
+
+  &.poor {
+    color: #EF4444;
+  }
+}
+
+.gradeTag {
+  padding: 2rpx 12rpx;
+  border-radius: $radius-round;
+
+  Text {
+    font-size: 20rpx;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.brandStats {
+  display: flex;
+  justify-content: space-around;
+  padding: $spacing-md 0;
+  border-top: 2rpx solid $color-border-light;
+  border-bottom: 2rpx solid $color-border-light;
+}
+
+.brandStatItem {
+  text-align: center;
+  flex: 1;
+}
+
+.brandStatValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.brandStatLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.brandModels {
+  margin-top: $spacing-sm;
+  padding-top: $spacing-sm;
+}
+
+.brandModelsLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.brandModelsText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.brandRecommendation {
+  margin-top: $spacing-xl;
+}
+
+.recommendCard {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(16, 185, 129, 0.06) 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  border: 2rpx solid rgba(59, 130, 246, 0.15);
+}
+
+.recommendRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+
+  &:last-of-type {
+    margin-bottom: $spacing-md;
+  }
+}
+
+.recommendLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+}
+
+.recommendValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-left: $spacing-sm;
+
+  &.warn {
+    color: $color-error;
+  }
+}
+
+.recommendHint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  line-height: 1.6;
+}

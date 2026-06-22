@@ -51,6 +51,8 @@ export interface TestRecord {
   grade: 'excellent' | 'good' | 'poor';
   testerId?: string;
   testerName?: string;
+  lightBrand?: string;
+  lightModel?: string;
 }
 
 export interface Building {
@@ -81,6 +83,22 @@ export interface ContributorInfo {
   testerName: string;
   score: number;
   testTime: string;
+  grade: 'excellent' | 'good' | 'poor';
+}
+
+export interface BrandRankItem {
+  rank: number;
+  brand: string;
+  avgScore: number;
+  testCount: number;
+  floorCount: number;
+  excellentCount: number;
+  goodCount: number;
+  poorCount: number;
+  excellentRatio: number;
+  poorRatio: number;
+  avgSensitivityScore: number;
+  models: string[];
   grade: 'excellent' | 'good' | 'poor';
 }
 
@@ -318,3 +336,24 @@ export const COMPLAINT_STATUS_CONFIG: Record<ComplaintStatus, { label: string; c
   processing: { label: '处理中', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.1)', icon: '🔧' },
   resolved: { label: '已解决', color: '#10B981', bgColor: 'rgba(16, 185, 129, 0.1)', icon: '✅' }
 };
+
+export const COMMON_LIGHT_BRANDS = [
+  '飞利浦 (Philips)',
+  '欧普照明 (OPPLE)',
+  '雷士照明 (NVC)',
+  '三雄极光 (Pak)',
+  '佛山照明 (FSL)',
+  '阳光照明 (Yankon)',
+  'TCL照明',
+  '美的照明 (Midea)',
+  '松下 (Panasonic)',
+  '欧司朗 (Osram)',
+  '公牛 (BULL)',
+  '正泰 (CHNT)',
+  '德力西 (DELIXI)',
+  '木林森 (MLS)',
+  '凯迪仕 (Kaadas)',
+  '其他品牌'
+];
+
+export const UNKNOWN_BRAND = '未知品牌';

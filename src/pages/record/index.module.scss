@@ -213,6 +213,32 @@
   }
 }
 
+.brandPickerRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  .formInput {
+    flex: 1;
+  }
+}
+
+.pickBrandBtn {
+  @include button-reset;
+  padding: 0 $spacing-md;
+  height: $button-height-md;
+  border-radius: $radius-md;
+  background: rgba($color-primary, 0.1);
+  color: $color-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
 .switchRow {
   display: flex;
   justify-content: space-between;
