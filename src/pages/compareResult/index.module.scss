@@ -453,22 +453,6 @@
   justify-content: center;
   transition: width $transition-slow;
   min-width: 0;
-
-  &.whisper {
-    background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-  }
-
-  &.normal {
-    background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
-  }
-
-  &.loud {
-    background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
-  }
-
-  &.shout {
-    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
-  }
 }
 
 .segmentText {
@@ -493,22 +477,6 @@
   width: 16rpx;
   height: 16rpx;
   border-radius: $radius-xs;
-
-  &.whisper {
-    background: #10B981;
-  }
-
-  &.normal {
-    background: #0EA5E9;
-  }
-
-  &.loud {
-    background: #F59E0B;
-  }
-
-  &.shout {
-    background: #EF4444;
-  }
 }
 
 .legendMiniText {

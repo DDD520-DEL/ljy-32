@@ -16,6 +16,13 @@ const BUILDING_COLORS = [
   { primary: '#EF4444', light: 'rgba(239, 68, 68, 0.15)', bar: 'linear-gradient(180deg, #F87171 0%, #EF4444 100%)' }
 ];
 
+const SENSITIVITY_COLORS: Record<string, { bg: string; bar: string }> = {
+  whisper: { bg: '#10B981', bar: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)' },
+  normal:  { bg: '#0EA5E9', bar: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' },
+  loud:    { bg: '#F59E0B', bar: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)' },
+  shout:   { bg: '#EF4444', bar: 'linear-gradient(135deg, #EF4444 0%, #F87171 100%)' }
+};
+
 const CompareResultPage: React.FC = () => {
   const router = useRouter();
   const { getMultiBuildingStats } = useData();
@@ -356,32 +363,32 @@ const CompareResultPage: React.FC = () => {
               <View className={styles.sensitivityBar}>
                 {whisperPct > 0 && (
                   <View
-                    className={styles.sensitivitySegment + ' ' + styles.whisper}
-                    style={{ width: `${whisperPct}%` }}
+                    className={styles.sensitivitySegment}
+                    style={{ width: `${whisperPct}%`, background: SENSITIVITY_COLORS.whisper.bar }}
                   >
                     <Text className={styles.segmentText}>{whisperPct}%</Text>
                   </View>
                 )}
                 {normalPct > 0 && (
                   <View
-                    className={styles.sensitivitySegment + ' ' + styles.normal}
-                    style={{ width: `${normalPct}%` }}
+                    className={styles.sensitivitySegment}
+                    style={{ width: `${normalPct}%`, background: SENSITIVITY_COLORS.normal.bar }}
                   >
                     <Text className={styles.segmentText}>{normalPct}%</Text>
                   </View>
                 )}
                 {loudPct > 0 && (
                   <View
-                    className={styles.sensitivitySegment + ' ' + styles.loud}
-                    style={{ width: `${loudPct}%` }}
+                    className={styles.sensitivitySegment}
+                    style={{ width: `${loudPct}%`, background: SENSITIVITY_COLORS.loud.bar }}
                   >
                     <Text className={styles.segmentText}>{loudPct}%</Text>
                   </View>
                 )}
                 {shoutPct > 0 && (
                   <View
-                    className={styles.sensitivitySegment + ' ' + styles.shout}
-                    style={{ width: `${shoutPct}%` }}
+                    className={styles.sensitivitySegment}
+                    style={{ width: `${shoutPct}%`, background: SENSITIVITY_COLORS.shout.bar }}
                   >
                     <Text className={styles.segmentText}>{shoutPct}%</Text>
                   </View>
@@ -390,7 +397,10 @@ const CompareResultPage: React.FC = () => {
               <View className={styles.sensitivityLegend}>
                 {Object.entries(SENSITIVITY_CONFIG).map(([key, config]) => (
                   <View key={key} className={styles.legendMiniItem}>
-                    <View className={styles.legendMiniColor + ' ' + styles[key]} />
+                    <View
+                      className={styles.legendMiniColor}
+                      style={{ backgroundColor: SENSITIVITY_COLORS[key]?.bg || '#999' }}
+                    />
                     <Text className={styles.legendMiniText}>{config.label}</Text>
                   </View>
                 ))}
